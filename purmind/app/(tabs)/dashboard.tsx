@@ -3,7 +3,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import ResumeDailyStatusCard from '@/components/component_screens/dashboard/ResumeDailyStatusCard';
 import WRText from '@/components/wrappers/Text';
 import WRScreenContainer from '@/components/wrappers/ScreenContainer';
-import Emoji from '@/components/UI/emoji';
+import InlineEmojiText from '@/components/UI/InlineEmojiText';
 
 export default function DashboardScreen() {
   const { theme } = useAppTheme();
@@ -15,12 +15,16 @@ export default function DashboardScreen() {
       color: theme.colors.muted
     }
   });
-  
+
   return (
     <WRScreenContainer>
-      <WRText style={screenStyle.textGreetings}>
-        Bom dia Victor! Que tal uma dose de <WRText style={{ color: theme.colors.primary, fontWeight: theme.fonts.bold.fontWeight }}>café</WRText> e <WRText style={{ color: theme.colors.primary, fontWeight: theme.fonts.bold.fontWeight }}>foco</WRText>? <Emoji name="hot-beverage" />
-      </WRText>
+      <InlineEmojiText
+        emojiName="hot-beverage"
+        emojiSize={18}
+        textStyle={screenStyle.textGreetings}
+      >
+        Bom dia Victor! Que tal uma dose de <WRText style={{ color: theme.colors.primary, fontWeight: theme.fonts.bold.fontWeight }}>café</WRText> e <WRText style={{ color: theme.colors.primary, fontWeight: theme.fonts.bold.fontWeight }}>foco</WRText>?
+      </InlineEmojiText>
       <ResumeDailyStatusCard />
     </WRScreenContainer>
   );

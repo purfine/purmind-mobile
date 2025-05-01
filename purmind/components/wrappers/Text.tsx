@@ -8,7 +8,15 @@ const WRText = forwardRef<React.ComponentRef<typeof RNText>, TextProps>((props, 
     <RNText
       ref={ref}
       {...props}
-      style={[{ fontFamily: theme.fonts.regular.fontFamily, fontWeight: theme.fonts.regular.fontWeight }, props.style]}
+      style={[
+        { 
+          fontFamily: theme.fonts.regular.fontFamily, 
+          fontWeight: theme.fonts.regular.fontWeight,
+          includeFontPadding: false,
+          textAlignVertical: 'center',
+        }, 
+        props.style
+      ]}
     />
   );
 });

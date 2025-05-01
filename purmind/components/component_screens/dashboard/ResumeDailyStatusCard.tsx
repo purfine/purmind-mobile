@@ -7,11 +7,14 @@ export default function ResumeDailyStatusCard() {
     const { theme } = useAppTheme();
 
     const componentStyle = StyleSheet.create({
-      
+      cardContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+      }
     });
     
     return (
-        <UICard fullWidth={true}>
+        <UICard fullWidth={true} style={componentStyle.cardContainer}>
             <Text style={{ color: theme.colors.muted }}>ResumeDailyStatusCard</Text>
         </UICard>
     );

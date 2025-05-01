@@ -1,7 +1,7 @@
 import { ReactNode } from "react"
-import { StyleSheet } from "react-native"
+import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from "react-native"
 
 export type Props = {
     children: ReactNode,
-    style?: StyleSheet
+    style?: ViewStyle | TextStyle | ImageStyle | Array<ViewStyle | TextStyle | ImageStyle>
 }

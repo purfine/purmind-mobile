@@ -1,34 +1,29 @@
 import React from 'react';
-import { useContext } from 'react';
-import { Image, ImageProps, Alert } from 'react-native';
-import DataContext from '@/context/DataContext';
+import { Image, ImageProps } from 'react-native';
+import emojiMap from '@/utils/emojiMap';
 
-type EmojiProps = ImageProps & {
+type EmojiProps = Omit<ImageProps, 'source'> & {
   name: string;
+  size?: number;
 };
 
-function Emoji({ name, style, ...props }: EmojiProps) {
-  const data = useContext(DataContext);
-  const normalizedNames = [
-    name.replaceAll(' ', '-'),
-    name.replaceAll('-', ' ')
-  ];
-  const foundName = normalizedNames.find(n => n in data);
-  const url = foundName ? data[foundName] : undefined;
-
-  if (!url) {
-    Alert.alert(`Emoji ${name} could not be found in the EmojiProvider's data.`);
-    return null; 
+const Emoji = ({ name, size = 16, style, ...props }: EmojiProps) => {
+  // Normaliza o nome para a chave do mapa
+  const normalizedName = name.toLowerCase().replace(/\s+/g, '-');
+  const emojiSource = emojiMap[normalizedName];
+  
+  if (!emojiSource) {
+    console.warn(`Emoji "${name}" não encontrado`);
+    return null;
   }
 
   return (
     <Image
-      source={{ uri: url }}
-      accessibilityLabel={name}
-      style={[{ width: 24, height: 24 }, style]}
+      source={emojiSource}
+      style={[{ width: size, height: size, resizeMode: 'contain' }, style]}
       {...props}
     />
   );
-}
+};
 
 export default Emoji;
