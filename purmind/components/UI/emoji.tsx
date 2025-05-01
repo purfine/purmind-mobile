@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, ImageProps } from 'react-native';
+import { Alert, Image, ImageProps } from 'react-native';
 import emojiMap from '@/utils/emojiMap';
 
 type EmojiProps = Omit<ImageProps, 'source'> & {

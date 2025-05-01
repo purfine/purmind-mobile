@@ -150,21 +150,23 @@ function generateEmojiMap(emojiData) {
 
 /**
  * Mapeamento de emojis para uso no React Native
- * Formato: { 'emoji-name': require('path/to/emoji.png') }
+ * Formato: { 'emoji-name': require('../path/to/emoji.png') }
  */
 type EmojiMap = {
-  [key: string]: number; // React Native usa números para representar imports de imagens
+  [key: string]: any; // React Native require() returns a number
 };
 
 `;
 
     let mapping = '';
     if (emojiFiles.length > 0) {
+      // No React Native, não podemos usar caminhos dinâmicos com require()
+      // Então definimos cada emoji com seu próprio require() estático
       mapping = `const emojiMap: EmojiMap = {\n${emojiFiles.map(file => {
         const name = path.basename(file, '.png');
         const source = emojiData[name] ? new URL(emojiData[name]).hostname : 'source unknown';
-        // No React Native, usamos require para imagens estáticas
-        return `  '${name}': require('../../assets/emojis/img/${file}'), // ${source}`;
+        // No React Native, precisa ser um literal estático. Não pode ser dinâmico.
+        return `  '${name}': require('../assets/emojis/img/${file}'), // ${source}`;
       }).join('\n')}\n};\n\nexport default emojiMap;\n`;
     } else {
       console.warn('⚠️ Nenhum emoji válido encontrado - gerando mapeamento vazio');
