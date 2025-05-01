@@ -144,30 +144,43 @@ function generateEmojiMap(emojiData) {
     console.log(`[DEBUG] Caminho do emojiMap: ${PATHS.mapFile}`);
     console.log(`[DEBUG] Emojis válidos encontrados: ${emojiFiles.length}`);
 
-    const header = `// AUTO-GENERATED FILE - DO NOT EDIT MANUALLY\n// Gerado em: ${new Date().toISOString()}\n// Total de emojis: ${emojiFiles.length}\n\ntype EmojiMap = Record<string, any>;\n\n`;
+    const header = `// AUTO-GENERATED FILE - DO NOT EDIT MANUALLY
+// Gerado em: ${new Date().toISOString()}
+// Total de emojis: ${emojiFiles.length}
 
-    let imports = '';
+/**
+ * Mapeamento de emojis para uso no React Native
+ * Formato: { 'emoji-name': require('path/to/emoji.png') }
+ */
+type EmojiMap = {
+  [key: string]: number; // React Native usa números para representar imports de imagens
+};
+
+`;
+
     let mapping = '';
     if (emojiFiles.length > 0) {
-      imports = emojiFiles.map(file => {
-        const name = path.basename(file, '.png');
-        const varName = name.replace(/-/g, '_').replace(/[^a-z0-9_]/gi, '');
-        return `import ${varName} from '../../assets/emojis/img/${file}';`;
-      }).join('\n');
-
       mapping = `const emojiMap: EmojiMap = {\n${emojiFiles.map(file => {
         const name = path.basename(file, '.png');
-        const varName = name.replace(/-/g, '_').replace(/[^a-z0-9_]/gi, '');
         const source = emojiData[name] ? new URL(emojiData[name]).hostname : 'source unknown';
-        return `  '${name}': ${varName}, // ${source}`;
+        // No React Native, usamos require para imagens estáticas
+        return `  '${name}': require('../../assets/emojis/img/${file}'), // ${source}`;
       }).join('\n')}\n};\n\nexport default emojiMap;\n`;
     } else {
       console.warn('⚠️ Nenhum emoji válido encontrado - gerando mapeamento vazio');
       mapping = `const emojiMap: EmojiMap = {};\n\nexport default emojiMap;\n`;
     }
 
-    fs.writeFileSync(PATHS.mapFile, header + imports + '\n\n' + mapping);
+    fs.writeFileSync(PATHS.mapFile, header + mapping);
     console.log(`📝 Mapeamento gerado com ${emojiFiles.length} emojis em ${PATHS.mapFile}`);
+    
+    // Verificar se o arquivo foi escrito com sucesso
+    if (fs.existsSync(PATHS.mapFile)) {
+      const stats = fs.statSync(PATHS.mapFile);
+      console.log(`[DEBUG] Arquivo criado/atualizado com sucesso (${stats.size} bytes)`);
+    } else {
+      console.error(`[ERROR] Falha ao escrever o arquivo: ${PATHS.mapFile} não existe após writeFileSync`);
+    }
   } catch (error) {
     console.error('❌ Falha ao gerar mapeamento:', error);
     throw error;
@@ -205,7 +218,9 @@ async function main() {
     if (!fs.existsSync(PATHS.mapFile)) {
       fs.writeFileSync(PATHS.mapFile, 
         `// AUTO-GENERATED FILE - DO NOT EDIT MANUALLY\n` +
-        `type EmojiMap = Record<string, any>;\n\n` +
+        `type EmojiMap = {\n` +
+        `  [key: string]: number;\n` +
+        `};\n\n` +
         `const emojiMap: EmojiMap = {};\n\n` +
         `export default emojiMap;`
       );
