@@ -1,3 +1,7 @@
+/*
+  Temas de cores do aplicativo.
+  É PROÍBIDO QUALQUER TIPO DE ALTERAÇÃO NESTE ARQUIVO SEM AUTORIZAÇÃO PRÉVIA.
+*/
 interface FontStyle {
     fontFamily: string;
     fontWeight: "normal" | "bold" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900";
@@ -9,6 +13,7 @@ export interface AppTheme {
     background: string;
     card: string;
     text: string;
+    muted: string;
     border: string;
     notification: string;
   },
@@ -27,6 +32,7 @@ export const lightTheme: AppTheme = {
     background: '#F1F0F5',
     card: '#ffffff',
     text: '#000000',
+    muted: "#868686",
     border: '#c7c7c7',
     notification: '#ff80ab',
   },
@@ -45,6 +51,7 @@ export const darkTheme: AppTheme = {
     background: '#121212',
     card: '#1e1e1e',
     text: '#ffffff',
+    muted: "#868686",
     border: '#272727',
     notification: '#ff80ab',
   },

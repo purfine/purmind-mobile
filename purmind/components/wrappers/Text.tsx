@@ -1,9 +1,9 @@
 import React, { forwardRef } from 'react';
-import { useTheme } from "@/context/ThemeContext";
+import { useAppTheme } from "@/context/ThemeContext";
 import { Text as RNText, TextProps } from 'react-native';
 
-const Text = forwardRef<React.ComponentRef<typeof RNText>, TextProps>((props, ref) => {
-  const { theme } = useTheme();
+const WRText = forwardRef<React.ComponentRef<typeof RNText>, TextProps>((props, ref) => {
+  const { theme } = useAppTheme();
   return (
     <RNText
       ref={ref}
@@ -13,4 +13,4 @@ const Text = forwardRef<React.ComponentRef<typeof RNText>, TextProps>((props, re
   );
 });
 
-export default Text;
+export default WRText;
