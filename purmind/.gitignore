@@ -38,7 +38,7 @@ yarn-error.*
 app-example
 
 # Utils
-# src/utils/emojiMap.ts
+utils/emojiMap.ts
 
 # Assets
 assets/emojis/img/*
