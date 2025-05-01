@@ -1,3 +1,12 @@
+/**
+ * Emoji Loader
+ * 
+ * Script para baixar emojis e gerar mapeamento
+ * 
+ * É ESTRITAMENTE PROIBIDO ALTERAR ESSE ARQUIVO SEM AUTORIZAÇÃO PRÉVIA.
+ * @author Victor
+ */
+
 const fs = require('fs');
 const https = require('https');
 const path = require('path');
@@ -20,7 +29,7 @@ const projectRoot = path.resolve(__dirname, '..');
 const PATHS = {
   emojiDir: path.join(projectRoot, 'assets', 'emojis', 'img'),
   dataFile: path.join(projectRoot, 'assets', 'emojis', 'data.json'),
-  mapFile: path.join(projectRoot, 'src', 'utils', 'emojiMap.ts'),
+  mapFile: path.join(projectRoot, 'utils', 'emojiMap.ts'),
 };
 
 // ========================================
@@ -132,36 +141,30 @@ function generateEmojiMap(emojiData) {
     const emojiFiles = fs.readdirSync(PATHS.emojiDir)
       .filter(file => file.endsWith('.png') && validateImage(path.join(PATHS.emojiDir, file)));
 
-    if (emojiFiles.length === 0) {
-      console.warn('⚠️ Nenhum emoji válido encontrado - mantendo mapeamento vazio');
-      return;
+    console.log(`[DEBUG] Caminho do emojiMap: ${PATHS.mapFile}`);
+    console.log(`[DEBUG] Emojis válidos encontrados: ${emojiFiles.length}`);
+
+    const header = `// AUTO-GENERATED FILE - DO NOT EDIT MANUALLY\n// Gerado em: ${new Date().toISOString()}\n// Total de emojis: ${emojiFiles.length}\n\ntype EmojiMap = Record<string, any>;\n\n`;
+
+    let imports = '';
+    let mapping = '';
+    if (emojiFiles.length > 0) {
+      imports = emojiFiles.map(file => {
+        const name = path.basename(file, '.png');
+        const varName = name.replace(/-/g, '_').replace(/[^a-z0-9_]/gi, '');
+        return `import ${varName} from '../../assets/emojis/img/${file}';`;
+      }).join('\n');
+
+      mapping = `const emojiMap: EmojiMap = {\n${emojiFiles.map(file => {
+        const name = path.basename(file, '.png');
+        const varName = name.replace(/-/g, '_').replace(/[^a-z0-9_]/gi, '');
+        const source = emojiData[name] ? new URL(emojiData[name]).hostname : 'source unknown';
+        return `  '${name}': ${varName}, // ${source}`;
+      }).join('\n')}\n};\n\nexport default emojiMap;\n`;
+    } else {
+      console.warn('⚠️ Nenhum emoji válido encontrado - gerando mapeamento vazio');
+      mapping = `const emojiMap: EmojiMap = {};\n\nexport default emojiMap;\n`;
     }
-
-    const header = `// AUTO-GENERATED FILE - DO NOT EDIT MANUALLY
-// Gerado em: ${new Date().toISOString()}
-// Total de emojis: ${emojiFiles.length}
-
-type EmojiMap = Record<string, any>;
-
-`;
-
-    const imports = emojiFiles.map(file => {
-      const name = path.basename(file, '.png');
-      const varName = name.replace(/-/g, '_').replace(/[^a-z0-9_]/gi, '');
-      return `import ${varName} from '../../assets/emojis/img/${file}';`;
-    }).join('\n');
-
-    const mapping = `const emojiMap: EmojiMap = {
-${emojiFiles.map(file => {
-  const name = path.basename(file, '.png');
-  const varName = name.replace(/-/g, '_').replace(/[^a-z0-9_]/gi, '');
-  const source = emojiData[name] ? new URL(emojiData[name]).hostname : 'source unknown';
-  return `  '${name}': ${varName}, // ${source}`;
-}).join('\n')}
-};
-
-export default emojiMap;
-`;
 
     fs.writeFileSync(PATHS.mapFile, header + imports + '\n\n' + mapping);
     console.log(`📝 Mapeamento gerado com ${emojiFiles.length} emojis em ${PATHS.mapFile}`);
