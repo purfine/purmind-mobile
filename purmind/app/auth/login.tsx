@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { View, Text, TextInput, Button, Alert } from 'react-native';
+import { View, TextInput, Button, Alert } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import Text from '@/components/wrappers/Text';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -11,7 +12,7 @@ export default function Login() {
   const handleLogin = async () => {
     try {
       await signIn(email, password);
-      router.replace('/tabs/dashboard');
+      router.replace('../(tabs)/dashboard');
     } catch (error) {
       Alert.alert('Erro', 'Falha no login: ' + error);
     }

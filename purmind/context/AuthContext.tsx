@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function loadUser() {
       // apenas para desenvolvimento
-      await SecureStore.deleteItemAsync('user');
+      await SecureStore.deleteItemAsync('user'); 
     
       const storedUser = await SecureStore.getItemAsync('user');
       if (storedUser) {

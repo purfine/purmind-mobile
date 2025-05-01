@@ -5,6 +5,7 @@ interface FontStyle {
 export interface AppTheme {
   colors: {
     primary: string;
+    primaryGradient: string[];
     background: string;
     card: string;
     text: string;
@@ -14,31 +15,33 @@ export interface AppTheme {
   fonts: {
     regular: FontStyle;
     medium: FontStyle;
+    semiBold: FontStyle;
     bold: FontStyle;
-    heavy: FontStyle;
   };
 }
 
 export const lightTheme: AppTheme = {
   colors: {
-    primary: '#6200ee',
-    background: '#ffffff',
+    primary: '#6823D1',
+    primaryGradient: ['#6823D1', '#46198B'],
+    background: '#F1F0F5',
     card: '#ffffff',
     text: '#000000',
     border: '#c7c7c7',
     notification: '#ff80ab',
   },
   fonts: {
-    regular: { fontFamily: 'Poppins', fontWeight: '400' },
-    medium: { fontFamily: 'Poppins', fontWeight: '500' },
-    bold: { fontFamily: 'Poppins', fontWeight: '600' },
-    heavy: { fontFamily: 'Poppins', fontWeight: '700' },
+    regular: { fontFamily: 'Urbanist-Regular', fontWeight: '400' },
+    medium: { fontFamily: 'Urbanist-Medium', fontWeight: '500' },
+    semiBold: { fontFamily: 'Urbanist-SemiBold', fontWeight: '600' },
+    bold: { fontFamily: 'Urbanist-Bold', fontWeight: '700' },
   }
 };
 
 export const darkTheme: AppTheme = {
   colors: {
     primary: '#bb86fc',
+    primaryGradient: ['#bb86fc', '#9068fd'],
     background: '#121212',
     card: '#1e1e1e',
     text: '#ffffff',
@@ -46,9 +49,9 @@ export const darkTheme: AppTheme = {
     notification: '#ff80ab',
   },
   fonts: {
-    regular: { fontFamily: 'Poppins', fontWeight: '400' },
-    medium: { fontFamily: 'Poppins', fontWeight: '500' },
-    bold: { fontFamily: 'Poppins', fontWeight: '600' },
-    heavy: { fontFamily: 'Poppins', fontWeight: '700' },
+    regular: { fontFamily: 'Urbanist-Regular', fontWeight: '400' },
+    medium: { fontFamily: 'Urbanist-Medium', fontWeight: '500' },
+    semiBold: { fontFamily: 'Urbanist-SemiBold', fontWeight: '600' },
+    bold: { fontFamily: 'Urbanist-Bold', fontWeight: '700' },
   }
 };
