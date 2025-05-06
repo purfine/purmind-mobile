@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { useAppTheme } from '../../context/ThemeContext';
 import { Image, Text } from 'react-native';
-import Icon from 'react-native-ionicons'
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function TabsLayout() {
   const { theme } = useAppTheme();
@@ -28,14 +28,14 @@ export default function TabsLayout() {
         name="dashboard"
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => <Icon ios='home-outline' android='home-outline'  size={20} color={theme.colors.primary}/>,
+          tabBarIcon: ({ color, size }) => <Ionicons name='home-outline' size={20} color={theme.colors.primary}/>,
         }}
       />
       <Tabs.Screen
         name="blocks/index"
         options={{
           tabBarLabel: 'Bloqueios',
-          tabBarIcon: ({ color, size }) => <Icon ios='home-outline' android='home-outline'  size={20} color={theme.colors.primary}/>,
+          tabBarIcon: ({ color, size }) => <Ionicons name='checkmark-circle' size={20} color={theme.colors.primary}/>,
         }}
       />
     </Tabs>

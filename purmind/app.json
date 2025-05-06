@@ -8,15 +8,8 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "assets": [
-      "./assets/emojis/emojis.zip"
-    ],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "me",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
