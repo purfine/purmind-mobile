@@ -1,23 +1,37 @@
 import { forwardRef } from "react";
-import { StyleSheet, View, ViewProps } from "react-native";
+import { StyleSheet, ScrollView, ScrollViewProps, Dimensions } from "react-native";
 
-const WRScreenContainer = forwardRef<React.ComponentRef<typeof View>, ViewProps>((props, ref) => {
+const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, ScrollViewProps>((props, ref) => {
+    // Get screen height to ensure minimum content height
+    const { height: screenHeight } = Dimensions.get('window');
+    
     const componentStyle = StyleSheet.create({
         screenContainer: {
             flex: 1,
-            alignItems: 'center',
+            height: screenHeight,
             paddingHorizontal: 10
+        },
+        contentContainer: {
+            alignItems: 'center',
+            paddingBottom: 20,
+            minHeight: screenHeight - 100 // Ensure there's enough content to scroll
         }
     });
     
     return (
-      <View
+      <ScrollView
         ref={ref}
         {...props}
         style={[componentStyle.screenContainer, ...(Array.isArray(props.style) ? props.style : [props.style])]}
+        contentContainerStyle={[componentStyle.contentContainer, props.contentContainerStyle]}
+        showsVerticalScrollIndicator={true}
+        scrollEnabled={true}
+        bounces={true}
+        alwaysBounceVertical={true}
+        keyboardShouldPersistTaps="handled"
       >
         {props.children}
-      </View>
+      </ScrollView>
     );
 });
   

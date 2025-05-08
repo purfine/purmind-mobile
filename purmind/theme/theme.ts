@@ -6,6 +6,18 @@ interface FontStyle {
     fontFamily: string;
     fontWeight: "normal" | "bold" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900";
 }
+interface TimeColor {
+  morning: string;
+  afternoon: string;
+  evening: string;
+  night: string;
+}
+interface TextTimeColor {
+  light: TimeColor,
+  regular: TimeColor,
+  semiBold: TimeColor,
+  bold: TimeColor,
+}
 export interface AppTheme {
   colors: {
     primary: string;
@@ -22,7 +34,10 @@ export interface AppTheme {
     medium: FontStyle;
     semiBold: FontStyle;
     bold: FontStyle;
-  };
+  },
+  timeColors: {
+    text: TextTimeColor;
+  }
 }
 
 export const lightTheme: AppTheme = {
@@ -41,6 +56,34 @@ export const lightTheme: AppTheme = {
     medium: { fontFamily: 'Urbanist-Medium', fontWeight: '500' },
     semiBold: { fontFamily: 'Urbanist-SemiBold', fontWeight: '600' },
     bold: { fontFamily: 'Urbanist-Bold', fontWeight: '700' },
+  },
+  timeColors: {
+    text: {
+      light: {
+        morning: '#E5B2F8',
+        afternoon: '#FFC68B',
+        evening: '#95BAFF',
+        night: '#FFFFFF',
+      },
+      regular: {
+        morning: '#E5B2F8',
+        afternoon: '#FFC68B',
+        evening: '#95BAFF',
+        night: '#FFFFFF',
+      },
+      semiBold: {
+        morning: '#8143BF',
+        afternoon: '#FFAA53',
+        evening: '#3E77E3',
+        night: '#FFFFFF',
+      },
+      bold: {
+        morning: '#8143BF',
+        afternoon: '#FFAA53',
+        evening: '#3E77E3',
+        night: '#FFFFFF',
+      },
+    }
   }
 };
 
@@ -60,5 +103,33 @@ export const darkTheme: AppTheme = {
     medium: { fontFamily: 'Urbanist-Medium', fontWeight: '500' },
     semiBold: { fontFamily: 'Urbanist-SemiBold', fontWeight: '600' },
     bold: { fontFamily: 'Urbanist-Bold', fontWeight: '700' },
+  },
+  timeColors: {
+    text: {
+      light: {
+        morning: '#E5B2F8',
+        afternoon: '#FFC68B',
+        evening: '#95BAFF',
+        night: '#FFFFFF',
+      },
+      regular: {
+        morning: '#E5B2F8',
+        afternoon: '#FFC68B',
+        evening: '#95BAFF',
+        night: '#FFFFFF',
+      },
+      semiBold: {
+        morning: '#8143BF',
+        afternoon: '#FFAA53',
+        evening: '#3E77E3',
+        night: '#FFFFFF',
+      },
+      bold: {
+        morning: '#8143BF',
+        afternoon: '#FFAA53',
+        evening: '#3E77E3',
+        night: '#FFFFFF',
+      },
+    }
   }
 };
