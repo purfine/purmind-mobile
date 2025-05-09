@@ -28,6 +28,7 @@ export interface AppTheme {
     muted: string;
     border: string;
     notification: string;
+    dividerColor: string;
   },
   fonts: {
     regular: FontStyle;
@@ -37,6 +38,9 @@ export interface AppTheme {
   },
   timeColors: {
     text: TextTimeColor;
+  },
+  icons: {
+    backgroundColor: string;
   }
 }
 
@@ -50,6 +54,7 @@ export const lightTheme: AppTheme = {
     muted: "#868686",
     border: '#c7c7c7',
     notification: '#ff80ab',
+    dividerColor: "#BFBFBF"
   },
   fonts: {
     regular: { fontFamily: 'Urbanist-Regular', fontWeight: '400' },
@@ -61,29 +66,32 @@ export const lightTheme: AppTheme = {
     text: {
       light: {
         morning: '#E5B2F8',
-        afternoon: '#FFC68B',
+        afternoon: '#FFE6CB',
         evening: '#95BAFF',
         night: '#FFFFFF',
       },
       regular: {
         morning: '#E5B2F8',
-        afternoon: '#FFC68B',
+        afternoon: '#FFE6CB',
         evening: '#95BAFF',
         night: '#FFFFFF',
       },
       semiBold: {
         morning: '#8143BF',
-        afternoon: '#FFAA53',
+        afternoon: '#FB8915',
         evening: '#3E77E3',
         night: '#FFFFFF',
       },
       bold: {
         morning: '#8143BF',
-        afternoon: '#FFAA53',
+        afternoon: '#FB8915',
         evening: '#3E77E3',
         night: '#FFFFFF',
       },
     }
+  },
+  icons: {
+    backgroundColor: "#ECECEC"
   }
 };
 
@@ -97,6 +105,7 @@ export const darkTheme: AppTheme = {
     muted: "#868686",
     border: '#272727',
     notification: '#ff80ab',
+    dividerColor: "#BFBFBF"
   },
   fonts: {
     regular: { fontFamily: 'Urbanist-Regular', fontWeight: '400' },
@@ -131,5 +140,8 @@ export const darkTheme: AppTheme = {
         night: '#FFFFFF',
       },
     }
+  },
+  icons: {
+    backgroundColor: "#ECECEC"
   }
 };

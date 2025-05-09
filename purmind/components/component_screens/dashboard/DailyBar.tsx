@@ -82,7 +82,7 @@ export default function DailyBar() {
         },
         button: {
             marginTop: 12,
-            backgroundColor: '#FFFFFF',
+            backgroundColor: regularTimeTextColor
         }
     });
     
@@ -101,7 +101,7 @@ export default function DailyBar() {
                     <WRText style={styles.greetingText}>Já tomou sua <WRText style={{ fontWeight: 'bold', color: boldTimeTextColor }}>purmind</WRText> hoje?</WRText>
                     <UIButton 
                         text="Ver Calendário" 
-                        textColor={theme.colors.primary}  
+                        textColor={boldTimeTextColor}  
                         style={styles.button}
                     />
                 </View>
