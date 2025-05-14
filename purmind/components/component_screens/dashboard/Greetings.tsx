@@ -3,7 +3,16 @@ import { View, StyleSheet, Dimensions, LayoutChangeEvent } from 'react-native';
 import WRText from '@/components/wrappers/Text';
 import { useAppTheme } from '@/context/ThemeContext';
 import { getGreetingMessage } from '@/services/greetingService';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming, 
+  withRepeat, 
+  Easing, 
+  cancelAnimation, 
+  runOnJS,
+  useAnimatedReaction 
+} from 'react-native-reanimated';
 
 interface GreetingsProps {
   userName?: string;
@@ -23,56 +32,67 @@ export default function Greetings({ userName = 'Victor', scrollSpeed = 8000 }: G
     emoji: ''
   });
   
-  const screenWidth = Dimensions.get('window').width;
+  // React state to store layout measurements
+  const [textMeasured, setTextMeasured] = useState(false);
+  const [containerMeasured, setContainerMeasured] = useState(false);
+  
+  // Shared values for animations
   const textWidth = useSharedValue(0);
   const containerWidth = useSharedValue(0);
   const scrollX = useSharedValue(0);
   const shouldScroll = useSharedValue(false);
-  const animationRef = useRef<number | null>(null);
   
   // Update greeting message
   useEffect(() => {
     updateGreeting();
-    
     const intervalId = setInterval(updateGreeting, 60 * 60 * 1000);
-    
     return () => clearInterval(intervalId);
   }, [userName]);
   
-  // Handle the marquee animation
+  // Check if we should scroll when measurements change
   useEffect(() => {
-    if (shouldScroll.value) {
-      // For very long text, we need to ensure it starts from a visible position
-      // and then scrolls completely off-screen before repeating
-      
-      // First, reset position
-      scrollX.value = 0;
-      
-      // Calculate animation duration - fixed base speed with adjustment for text length
-      const baseDuration = scrollSpeed;
-      const calculatedDuration = Math.max(baseDuration, textWidth.value * 15);
-      
-      // Create animation that moves from 0 to -textWidth (plus some padding)
-      const animation = withRepeat(
-        withTiming(-(textWidth.value + containerWidth.value), { 
-          duration: calculatedDuration,
-          easing: Easing.linear 
-        }),
-        -1, // Infinite repeats
-        false // Don't reverse
-      );
-      
-      scrollX.value = animation;
-    } else {
-      // Cancel any existing animation
-      cancelAnimation(scrollX);
-      scrollX.value = 0;
+    if (textMeasured && containerMeasured) {
+      checkIfShouldScroll();
     }
-    
+  }, [textMeasured, containerMeasured]);
+  
+  // Use animated reaction to trigger animation when shouldScroll changes
+  useAnimatedReaction(
+    () => shouldScroll.value,
+    (shouldScrollNow, previousValue) => {
+      if (shouldScrollNow) {
+        // Reset position
+        scrollX.value = 0;
+        
+        // Calculate animation duration
+        const baseDuration = scrollSpeed;
+        const calculatedDuration = Math.max(baseDuration, textWidth.value * 15);
+        
+        // Create animation
+        const animation = withRepeat(
+          withTiming(-(textWidth.value + containerWidth.value), { 
+            duration: calculatedDuration,
+            easing: Easing.linear 
+          }),
+          -1, // Infinite repeats
+          false // Don't reverse
+        );
+        
+        scrollX.value = animation;
+      } else {
+        cancelAnimation(scrollX);
+        scrollX.value = 0;
+      }
+    },
+    [scrollSpeed] // Dependencies for the worklet
+  );
+  
+  // Cleanup animation on unmount
+  useEffect(() => {
     return () => {
       cancelAnimation(scrollX);
     };
-  }, [shouldScroll.value, textWidth.value, containerWidth.value]);
+  }, []);
   
   const updateGreeting = () => {
     const message = getGreetingMessage(userName);
@@ -83,22 +103,24 @@ export default function Greetings({ userName = 'Victor', scrollSpeed = 8000 }: G
   const onContainerLayout = (event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout;
     containerWidth.value = width;
-    checkIfShouldScroll();
+    setContainerMeasured(true);
   };
   
   // Measure text width
   const onTextLayout = (event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout;
     textWidth.value = width;
-    checkIfShouldScroll();
+    setTextMeasured(true);
   };
   
   // Determine if text should scroll
   const checkIfShouldScroll = () => {
-    // Add a small buffer (10px) to prevent borderline cases from triggering the marquee
-    if (textWidth.value > (containerWidth.value + 10) && containerWidth.value > 0) {
+    const textWidthVal = textWidth.value;
+    const containerWidthVal = containerWidth.value;
+    
+    if (textWidthVal > (containerWidthVal + 10) && containerWidthVal > 0) {
       shouldScroll.value = true;
-      console.log('Marquee activated - Text width:', textWidth.value, 'Container width:', containerWidth.value);
+      console.log('Marquee activated - Text width:', textWidthVal, 'Container width:', containerWidthVal);
     } else {
       shouldScroll.value = false;
     }
@@ -107,7 +129,8 @@ export default function Greetings({ userName = 'Victor', scrollSpeed = 8000 }: G
   // Animated style for the scrolling text
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ translateX: shouldScroll.value ? scrollX.value : 0 }],
+      transform: [{ translateX: scrollX.value }],
+      alignSelf: shouldScroll.value ? 'flex-start' : 'center'
     };
   });
   
@@ -140,7 +163,7 @@ export default function Greetings({ userName = 'Victor', scrollSpeed = 8000 }: G
     <View style={styles.container}>
       <View style={styles.textContainer} onLayout={onContainerLayout}>
         <Animated.View 
-          style={[animatedStyle, { alignSelf: shouldScroll.value ? 'flex-start' : 'center' }]}
+          style={animatedStyle}
         >
           <WRText 
             style={styles.textGreetings}

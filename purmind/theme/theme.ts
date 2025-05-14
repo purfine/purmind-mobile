@@ -97,15 +97,15 @@ export const lightTheme: AppTheme = {
 
 export const darkTheme: AppTheme = {
   colors: {
-    primary: '#bb86fc',
-    primaryGradient: ['#bb86fc', '#9068fd'],
+    primary: '#9A6CFF', // tom mais vibrante no fundo escuro
+    primaryGradient: ['#9A6CFF', '#6E42C1'], // degradê mais forte
     background: '#121212',
-    card: '#1e1e1e',
-    text: '#ffffff',
-    muted: "#868686",
-    border: '#272727',
-    notification: '#ff80ab',
-    dividerColor: "#BFBFBF"
+    card: '#1C1C1E', // mais agradável que puro preto
+    text: '#F5F5F5',
+    muted: "#A6A6A6", // mais claro para legibilidade
+    border: '#2C2C2E',
+    notification: '#FF99B3', // mais suave e visível
+    dividerColor: "#3A3A3C"
   },
   fonts: {
     regular: { fontFamily: 'Urbanist-Regular', fontWeight: '400' },
@@ -116,32 +116,32 @@ export const darkTheme: AppTheme = {
   timeColors: {
     text: {
       light: {
-        morning: '#E5B2F8',
-        afternoon: '#FFC68B',
-        evening: '#95BAFF',
+        morning: '#D1A6F2',     // tom claro suave
+        afternoon: '#FFD9A3',   // caloroso, sem ofuscar
+        evening: '#A8C6FF',     // mais visível que #95BAFF
         night: '#FFFFFF',
       },
       regular: {
-        morning: '#E5B2F8',
-        afternoon: '#FFC68B',
-        evening: '#95BAFF',
+        morning: '#D1A6F2',
+        afternoon: '#FFD9A3',
+        evening: '#A8C6FF',
         night: '#FFFFFF',
       },
       semiBold: {
-        morning: '#8143BF',
-        afternoon: '#FFAA53',
-        evening: '#3E77E3',
+        morning: '#A66DD1',
+        afternoon: '#FF9F3E',
+        evening: '#5A92E6',
         night: '#FFFFFF',
       },
       bold: {
-        morning: '#8143BF',
-        afternoon: '#FFAA53',
-        evening: '#3E77E3',
+        morning: '#A66DD1',
+        afternoon: '#FF9F3E',
+        evening: '#5A92E6',
         night: '#FFFFFF',
       },
     }
   },
   icons: {
-    backgroundColor: "#ECECEC"
+    backgroundColor: "#2B2B2B" // tom escuro mais neutro para destacar ícones claros
   }
 };
