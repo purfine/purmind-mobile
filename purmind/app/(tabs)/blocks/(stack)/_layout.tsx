@@ -56,7 +56,7 @@ export default function StackLayout() {
       }}
     >
       <Stack.Screen 
-        name="BlockAbout" 
+        name="block-about" 
         options={{
           title: 'Bloqueios + Purmind',
           headerTitleStyle: {

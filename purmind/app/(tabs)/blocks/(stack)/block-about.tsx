@@ -54,7 +54,7 @@ export default function BlockAbout() {
                             staticSource={require("../../../../assets/emojis/block.png")} 
                             size={40}
                         />
-                        <UIIcon name="add" color="black" style={{  }}/>
+                        <UIIcon name="add" color="black"/>
                         <UIIcon 
                             staticSource={require("../../../../assets/emojis/purmind_capsula.png")} 
                             size={40}

@@ -18,7 +18,6 @@ const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRSc
             paddingHorizontal: 10
         },
         contentContainer: {
-            alignItems: 'center',
             paddingBottom: 20,
             minHeight: screenHeight - 100 // Ensure there's enough content to scroll
         }

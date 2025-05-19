@@ -4,15 +4,27 @@ import WRScreenContainer from "@/components/wrappers/ScreenContainer";
 import WRText from "@/components/wrappers/Text";
 import { useAppTheme } from "@/context/ThemeContext";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
-import { router } from "expo-router";
-import UIBadge from "@/components/UI/badge";
+import { useFocusEffect } from "expo-router";
+import SessionCard from "@/components/component_screens/blocks/SessionCard";
+import { useCallback, useState } from "react";
+import { getAllSessions, getActiveSession, Session } from "@/mock/sessions";
 
 export default function BlocksScreen() {
-  // Função para navegar para a tela de detalhes
-  const navigateToBlockAbout = () => {
-    router.push("/(tabs)/blocks/(stack)/BlockAbout");
-  };
   const { theme } = useAppTheme();
+
+  // Estado para armazenar a sessão ativa e todas as sessões
+  const [activeSession, setActiveSession] = useState<Session | undefined>();
+  const [allSessions, setAllSessions] = useState<Session[]>([]);
+  
+  // Atualizar os dados quando a tela receber foco
+  useFocusEffect(
+    useCallback(() => {
+      // Buscar a sessão ativa e todas as sessões
+      setActiveSession(getActiveSession());
+      setAllSessions(getAllSessions());
+    }, [])
+  );
+
   const screenStyles = StyleSheet.create({
     cardRowContainer: {
       flexDirection: 'row',
@@ -48,9 +60,8 @@ export default function BlocksScreen() {
       <UICard 
         fullWidth 
         style={screenStyles.cardContainer}
-        openStack
-        href="/(tabs)/blocks/(stack)/BlockAbout"
-        onPress={navigateToBlockAbout}
+        openStack={true}
+        href="/(tabs)/blocks/(stack)/block-about"
       >
         <View style={screenStyles.cardRowContainer}>
           {/** Left */}
@@ -79,42 +90,50 @@ export default function BlocksScreen() {
       </UICard>
 
       {/** Sessão em andamento */}
-      <WRText style={{ marginTop: 20 }}>Sessão em andamento</WRText>
-      <UICard
-        style={screenStyles.cardContainer}
-        fullWidth
-        showProgressBar
-        progressValue={20}
-        openStack
-        href="/(tabs)/blocks/(stack)/BlockAbout"
-      >
-        <View style={screenStyles.cardRowContainer}>
-          {/** Left */}
-          <View>
-            <WRText style={{ fontSize: 40 }}>💻</WRText>
+      <WRText style={{ marginTop: 20 }} bold size={16}>Sessão em andamento</WRText>
+      {activeSession ? (
+        <SessionCard
+          sessionFig={activeSession.figure}
+          sessionTitle={activeSession.title}
+          showProgressBar
+          openStack={true}
+          endSessionInSec={activeSession.endSessionInSec}
+          startSessionInSec={activeSession.startSessionInSec}
+        />
+      ) : (
+        <WRText style={{ marginTop: 10, marginBottom: 10 }} color={theme.colors.muted}>
+          Nenhuma sessão em andamento. Agende uma nova sessão abaixo.
+        </WRText>
+      )}
+      
+      {/** Sessões agendadas */}
+      {allSessions.length > 0 && (
+        <>
+          <WRText style={{ marginTop: 20 }} bold size={16}>Sessões agendadas</WRText>
+          {allSessions.map((session) => (
+            <SessionCard
+              key={session.id}
+              sessionFig={session.figure}
+              sessionTitle={session.title}
+              showProgressBar
+              openStack={true}
+              endSessionInSec={session.endSessionInSec}
+              startSessionInSec={session.startSessionInSec}
+            />
+          ))}
+        </>
+      )}
+    
+     {/** Agendar sessão */} 
+      <WRText style={{ marginTop: 20 }} bold size={16}>Nova sessão</WRText>
+      <View style={{ marginTop: 20 }}>
+        <UICard openStack={true} href="/blocks/schedule-session-screen">
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <UIIcon name="calendar-outline" size={24} color={theme.colors.primary} />
+            <WRText style={{ marginLeft: 10 }}>Agendar nova sessão</WRText>
           </View>
-          {/** Right */}
-          <View>
-            <WRText bold size={16}>Tempo de trabalho</WRText>
-            <WRText style={{ marginTop: 5 }} size={13} color={theme.colors.muted}>Restante <WRText size={13}>1:49:33</WRText></WRText>
-            <UIBadge 
-              label="Bloqueio" 
-              backgroundColor="#222222"
-              textColor="#00FF9D"
-              showStatusDot={true}
-              statusDotColor="#00FF9D"
-              size="small"
-              style={{ marginTop: 8 }}
-              icons={[
-                <UIIcon name="logo-facebook" size={15} color="#1877F2" />,
-                <UIIcon name="logo-instagram" key="instagram" size={15} color="#E1306C" />,
-                <UIIcon name="logo-tiktok" key="tiktok" size={15} color="#FFFFFF" />,
-                <UIIcon name="ellipsis-horizontal" key="more" size={24} color="#FFFFFF" />
-              ]}
-            ><WRText></WRText></UIBadge>
-          </View>
-        </View>
-      </UICard>
+        </UICard>
+      </View>
     </WRScreenContainer>
   );
 }

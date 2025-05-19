@@ -19,6 +19,7 @@ interface TextTimeColor {
   bold: TimeColor,
 }
 export interface AppTheme {
+  type: 'light' | 'dark';
   colors: {
     primary: string;
     primaryGradient: string[];
@@ -45,6 +46,7 @@ export interface AppTheme {
 }
 
 export const lightTheme: AppTheme = {
+  type: 'light',
   colors: {
     primary: '#6823D1',
     primaryGradient: ['#6823D1', '#46198B'],
@@ -96,6 +98,7 @@ export const lightTheme: AppTheme = {
 };
 
 export const darkTheme: AppTheme = {
+  type: 'dark',
   colors: {
     primary: '#9A6CFF', // tom mais vibrante no fundo escuro
     primaryGradient: ['#9A6CFF', '#6E42C1'], // degradê mais forte
