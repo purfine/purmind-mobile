@@ -49,7 +49,7 @@ export default function DailyBar() {
                 setGreetingMessage("Boa noite Victor! 🌃")
             } else if (timePeriod === 'night') {
                 setRegularTimeTextColor(theme.timeColors.text.light.night);
-                setBoldTimeTextColor(theme.timeColors.text.bold.night);
+                setBoldTimeTextColor("black");
                 setBackgroundImage(require('@/assets/images/good-night-bg.png'));
                 setGreetingMessage("Boa noite Victor! 🌙")
             }

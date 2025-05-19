@@ -26,6 +26,12 @@ interface CardProps extends Props {
     openStack?: boolean;
     href?: string;
     onPress?: () => void;
+
+    /**
+     * Progress Bar Configurations
+     */
+    showProgressBar?: boolean;
+    progressValue?: number; // Value between 0 and 100
 }
 
 /**
@@ -37,7 +43,8 @@ interface CardProps extends Props {
 export default function UICard({ 
         children, style, fullWidth=false, 
         activeAccordion=false, accordionTitle="", accordionBeOpenDefault=false, useDividerInAccordion=false,
-        openStack=false, href="", onPress
+        openStack=false, href="", onPress,
+        showProgressBar=false, progressValue=0
     }: CardProps) {
     const { theme } = useAppTheme();
 
@@ -159,7 +166,10 @@ export default function UICard({
     const componentStyle = StyleSheet.create({
         cardContainer: {
             ...baseStyle,
-            ...(style as ViewStyle)
+            ...(style as ViewStyle),
+            overflow: 'hidden',
+            position: 'relative',
+            paddingBottom: showProgressBar ? 24 : 16 // Add extra padding at bottom when progress bar is shown
         },
         accordionHeader: {
             flexDirection: 'row',
@@ -199,6 +209,19 @@ export default function UICard({
         stackChevronTouchable: {
             padding: 8,
             borderRadius: 15,
+        },
+        progressBarContainer: {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 8,
+            backgroundColor: '#B5B5B5',
+        },
+        progressBar: {
+            height: '100%',
+            backgroundColor: theme.colors.primary,
+            width: `${Math.min(Math.max(progressValue, 0), 100)}%`,
         }
     });
 
@@ -245,6 +268,12 @@ export default function UICard({
                             color={theme.colors.muted} 
                         />
                     </TouchableOpacity>
+                </View>
+            )}
+
+            {showProgressBar && (
+                <View style={componentStyle.progressBarContainer}>
+                    <View style={componentStyle.progressBar} />
                 </View>
             )}
         </View>

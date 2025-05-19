@@ -1,7 +1,13 @@
-import { forwardRef } from "react";
+import React, { forwardRef } from "react";
 import { StyleSheet, ScrollView, ScrollViewProps, Dimensions } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, ScrollViewProps>((props, ref) => {
+interface WRScreenContainerProps extends ScrollViewProps {
+  useSafeAreaView?: boolean;
+}
+
+const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRScreenContainerProps>((
+  {useSafeAreaView = false, style, contentContainerStyle, children, ...props}, ref) => {
     // Get screen height to ensure minimum content height
     const { height: screenHeight } = Dimensions.get('window');
     
@@ -18,20 +24,24 @@ const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, Scro
         }
     });
     
+    const ContainerComponent = useSafeAreaView ? SafeAreaView : React.Fragment;
+
     return (
-      <ScrollView
-        ref={ref}
-        {...props}
-        style={[componentStyle.screenContainer, ...(Array.isArray(props.style) ? props.style : [props.style])]}
-        contentContainerStyle={[componentStyle.contentContainer, props.contentContainerStyle]}
-        showsVerticalScrollIndicator={true}
-        scrollEnabled={true}
-        bounces={true}
-        alwaysBounceVertical={true}
-        keyboardShouldPersistTaps="handled"
-      >
-        {props.children}
-      </ScrollView>
+      <ContainerComponent>
+        <ScrollView
+          ref={ref}
+          {...props}
+          style={[componentStyle.screenContainer, ...(Array.isArray(style) ? style : [style])]}
+          contentContainerStyle={[componentStyle.contentContainer, contentContainerStyle]}
+          showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
+          bounces={true}
+          alwaysBounceVertical={true}
+          keyboardShouldPersistTaps="handled"
+        >
+          {children}
+        </ScrollView>
+      </ContainerComponent>
     );
 });
   

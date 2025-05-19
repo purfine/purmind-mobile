@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from '../context/AuthContext';
 import SplashScreen from './splash';
 import { ThemeProvider } from '../context/ThemeContext';
 import { createContext, useContext, useState, useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { StyleSheet } from 'react-native';
 
 // Contexto para gerenciar a visibilidade do header em telas stack
 interface NavigationContextType {
@@ -30,15 +32,17 @@ export default function RootLayout() {
   }, [pathname]);
 
   return (
-    <ThemeProvider>
-      <SafeAreaProvider>
-        <NavigationContext.Provider value={{ hideTabBar, setHideTabBar }}>
-          <AuthProvider>
-            <InnerRouter />
-          </AuthProvider>
-        </NavigationContext.Provider>
-      </SafeAreaProvider>
-    </ThemeProvider>
+    <GestureHandlerRootView style={styles.container}>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <NavigationContext.Provider value={{ hideTabBar, setHideTabBar }}>
+            <AuthProvider>
+              <InnerRouter />
+            </AuthProvider>
+          </NavigationContext.Provider>
+        </SafeAreaProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -49,3 +53,9 @@ function InnerRouter() {
   }
   return <Slot />;
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
