@@ -1,3 +1,12 @@
+/*
+ * @(#)emoji-selector.tsx
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * http://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity, FlatList, TextInput, ScrollView, Dimensions } from 'react-native';
 import WRText from '@/components/wrappers/Text';

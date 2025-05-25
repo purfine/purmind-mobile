@@ -1,14 +1,8 @@
 /*
- * @(#)reanimated.config.js
+ * @(#)nome_arquivo.ts/tsx
  *
  * Copyright 2025, Purmind - Purfine Group
  * http://www.purmind.com.br
  *
  * Todos os direitos reservados.
  */
-
-module.exports = {
-  logger: {
-    strict: false,
-  },
-};

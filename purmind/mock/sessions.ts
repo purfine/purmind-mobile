@@ -1,65 +1,59 @@
-import { v4 as uuidv4 } from 'uuid';
-
-export interface Session {
-  id: string;
-  figure: string;
-  title: string;
-  startSessionInSec: number;
-  endSessionInSec: number;
-  progressValue?: number;
-  createdAt: number;
-}
-
-// Initial mock data
-let sessions: Session[] = [];
+/*
+ * @(#)sessions.ts
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * http://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
 
 /**
- * Get all sessions sorted by creation date (newest first)
+ * DEPRECIADO: Este arquivo é mantido para compatibilidade retroativa.
+ * Por favor, use a nova arquitetura:
+ * - Modelos: @/models/session.ts
+ * - Repositório: @/repositories/sessionRepository.ts
+ * - Serviço: @/services/blocks/scheduleService.ts
+ * - Hook: @/hooks/useSession.ts
+ */
+
+import { Session, RepeatType, CreateSessionDTO } from "@/models/session";
+import { scheduleService } from "@/services/blocks/scheduleService";
+
+// Reexporta tipos para compatibilidade retroativa
+export type { Session, RepeatType };
+
+/**
+ * Obtém todas as sessões ordenadas por data de criação (mais recentes primeiro)
+ * @deprecated Use scheduleService.getAllSessions() ou o hook useSession() em vez disso
  */
 export const getAllSessions = (): Session[] => {
-  return [...sessions].sort((a, b) => b.createdAt - a.createdAt);
+  return scheduleService.getAllSessions();
 };
 
 /**
- * Get active session (current or upcoming)
+ * Obtém a sessão ativa (atual ou próxima)
+ * @deprecated Use scheduleService.getActiveSession() ou o hook useSession() em vez disso
  */
 export const getActiveSession = (): Session | undefined => {
-  const now = Math.floor(Date.now() / 1000);
-  
-  // First check for a session that's currently active
-  const currentSession = sessions.find(session => 
-    session.startSessionInSec <= now && session.endSessionInSec > now
-  );
-  
-  if (currentSession) return currentSession;
-  
-  // If no current session, find the next upcoming session
-  const upcomingSessions = sessions.filter(session => session.startSessionInSec > now);
-  if (upcomingSessions.length === 0) return undefined;
-  
-  // Return the session that will start soonest
-  return upcomingSessions.sort((a, b) => a.startSessionInSec - b.startSessionInSec)[0];
+  return scheduleService.getActiveSession();
 };
 
 /**
- * Add a new session
+ * Adiciona uma nova sessão
+ * @deprecated Use scheduleService.createSession() ou o hook useSession() em vez disso
  */
 export const addSession = (session: Omit<Session, 'id' | 'createdAt'>): Session => {
-  const newSession: Session = {
-    ...session,
-    id: uuidv4(),
-    createdAt: Math.floor(Date.now() / 1000)
-  };
-  
-  sessions.push(newSession);
-  return newSession;
+  const result = scheduleService.createSession(session as CreateSessionDTO);
+  if (result.success && result.session) {
+    return result.session;
+  }
+  throw new Error(result.error || 'Failed to create session');
 };
 
 /**
- * Delete a session by ID
+ * Exclui uma sessão pelo ID
+ * @deprecated Use scheduleService.deleteSession() ou o hook useSession() em vez disso
  */
 export const deleteSession = (id: string): boolean => {
-  const initialLength = sessions.length;
-  sessions = sessions.filter(session => session.id !== id);
-  return sessions.length < initialLength;
+  return scheduleService.deleteSession(id);
 };

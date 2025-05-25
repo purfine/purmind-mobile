@@ -51,7 +51,6 @@ export default function StackLayout() {
         // Configurações específicas para o botão de voltar
         headerBackTitle: '', // Remove o texto do botão de voltar no iOS
         headerBackVisible: true, // Garante que o botão de voltar esteja visível
-        // Botão de voltar personalizado para iOS
         headerLeft: Platform.OS === 'ios' ? () => <CustomBackButton /> : undefined
       }}
     >
@@ -59,6 +58,32 @@ export default function StackLayout() {
         name="block-about" 
         options={{
           title: 'Bloqueios + Purmind',
+          headerTitleStyle: {
+            fontSize: 18,
+            fontWeight: '600',
+          },
+          // Configurações para o header
+          headerStyle: {
+            backgroundColor: theme.colors.card,
+          },
+          // Configurações para o conteúdo
+          contentStyle: {
+            backgroundColor: theme.colors.background,
+          },
+          // Usa SafeAreaView para lidar com a status bar
+          headerTransparent: false,
+          // Configurações específicas para o botão de voltar no iOS
+          headerBackVisible: Platform.OS !== 'ios', // Esconde o botão padrão no iOS
+          headerBackTitle: '',
+          // Botão de voltar personalizado para iOS
+          headerLeft: Platform.OS === 'ios' ? () => <CustomBackButton /> : undefined
+        }}
+      />
+
+      <Stack.Screen 
+        name="schedule-session-screen" 
+        options={{
+          title: 'Nova sessão',
           headerTitleStyle: {
             fontSize: 18,
             fontWeight: '600',

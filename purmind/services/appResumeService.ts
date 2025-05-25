@@ -1,3 +1,12 @@
+/*
+ * @(#)appResumeService.ts
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * http://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
 export interface AppUsage {
     id: string;
     appName: string;

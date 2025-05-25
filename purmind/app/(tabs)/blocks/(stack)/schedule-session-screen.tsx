@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, Platform, KeyboardAvoidingView, Modal, Dimensions } from 'react-native';
+import { View, TouchableOpacity, Platform, KeyboardAvoidingView, ScrollView, Modal } from 'react-native';
 import WRScreenContainer from '@/components/wrappers/ScreenContainer';
 import WRText from '@/components/wrappers/Text';
 import UIButton from '@/components/UI/button';
@@ -7,9 +7,11 @@ import UIIcon from '@/components/UI/icon';
 import { useAppTheme } from '@/context/ThemeContext';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
-import { addSession } from '@/mock/sessions';
 import { TextInput } from 'react-native-gesture-handler';
 import CustomEmojiSelector from '@/components/UI/emoji-selector';
+import { styles } from './styles/schedule-session-screen-stylesheet';
+import { useSession } from '@/hooks/useSession';
+import { RepeatType } from '@/models/session';
 
 // Emojis pré-definidos para seleção rápida
 const EMOJI_OPTIONS = [
@@ -18,6 +20,7 @@ const EMOJI_OPTIONS = [
 
 export default function ScheduleSessionScreen() {
   const { theme } = useAppTheme();
+  const { createSession, formatDate, formatTime, dateToSeconds } = useSession();
   
   // State para inputs do formulário
   const [sessionTitle, setSessionTitle] = useState('');
@@ -38,27 +41,36 @@ export default function ScheduleSessionScreen() {
   // State para o seletor de emojis
   const [isEmojiSelectorVisible, setIsEmojiSelectorVisible] = useState(false);
   
+  // State para repetição
+  const [repeatType, setRepeatType] = useState<RepeatType>('none');
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
+  const [showRepeatOptions, setShowRepeatOptions] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  
+  // Opções de repetição
+  const repeatOptions = [
+    { label: 'Não repetir', value: 'none' },
+    { label: 'Todos os dias', value: 'daily' },
+    { label: 'Dias úteis', value: 'weekdays' },
+    { label: 'Fins de semana', value: 'weekends' },
+    { label: 'Personalizado', value: 'custom' },
+  ];
+  
+  // Dias da semana para seleção personalizada
+  const weekDays = [
+    { label: 'D', value: 0, fullName: 'Domingo' },
+    { label: 'S', value: 1, fullName: 'Segunda' },
+    { label: 'T', value: 2, fullName: 'Terça' },
+    { label: 'Q', value: 3, fullName: 'Quarta' },
+    { label: 'Q', value: 4, fullName: 'Quinta' },
+    { label: 'S', value: 5, fullName: 'Sexta' },
+    { label: 'S', value: 6, fullName: 'Sábado' },
+  ];
+  
   // Manipula a seleção de emoji
   const handleEmojiSelected = (emoji: string) => {
     setSelectedEmoji(emoji);
     setIsEmojiSelectorVisible(false);
-  };
-  
-  // Formata data para exibição
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
-  
-  // Formata hora para exibição
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
   
   // Manipula mudanças na data/hora de início
@@ -96,29 +108,31 @@ export default function ScheduleSessionScreen() {
   };
   
   // Valida o formulário e cria a sessão
-  const handleCreateSession = () => {
-    // Validação básica
-    if (!sessionTitle.trim()) {
-      // Em um app real, mostrar uma mensagem de erro
-      return;
-    }
+  const handleCreateSession = async () => {
+    // Limpar erro anterior
+    setFormError(null);
     
-    // Garante que a data de término é depois da data de início
-    if (endDate <= startDate) {
-      // Em um app real, mostrar uma mensagem de erro
-      return;
-    }
+    // Converter datas para timestamps em segundos
+    const startTimestamp = dateToSeconds(startDate);
+    const endTimestamp = dateToSeconds(endDate);
     
-    // Cria a sessão
-    addSession({
-      title: sessionTitle,
+    // Criar a sessão usando o serviço
+    const result = await createSession({
       figure: selectedEmoji,
-      startSessionInSec: Math.floor(startDate.getTime() / 1000),
-      endSessionInSec: Math.floor(endDate.getTime() / 1000),
+      title: sessionTitle,
+      startSessionInSec: startTimestamp,
+      endSessionInSec: endTimestamp,
+      repeatType: repeatType,
+      repeatDays: repeatType === 'custom' ? selectedDays : undefined
     });
     
-    // Navega de volta para a tela anterior
-    router.back();
+    if (result.success) {
+      // Navegar de volta para a tela anterior
+      router.back();
+    } else {
+      // Exibir mensagem de erro
+      setFormError(result.error || 'Ocorreu um erro ao criar a sessão');
+    }
   };
   
   return (
@@ -126,12 +140,7 @@ export default function ScheduleSessionScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <WRScreenContainer style={styles.container}>
-        <View style={styles.header}>
-          <WRText bold size={18}>Agendar sessão</WRText>
-          <View style={{ width: 24 }} />
-        </View>
-        
+      <WRScreenContainer style={styles.container}>    
         <View style={styles.section}>
           <WRText bold size={16} style={styles.sectionTitle}>Emoji da sessão</WRText>
           <View style={styles.emojiSection}>
@@ -284,6 +293,94 @@ export default function ScheduleSessionScreen() {
           )}
         </View>
         
+        {/* Seção de Repetição */}
+        <View style={styles.section}>
+          <WRText bold size={16} style={styles.sectionTitle}>Repetição</WRText>
+          
+          <TouchableOpacity 
+            style={styles.repeatButton}
+            onPress={() => setShowRepeatOptions(!showRepeatOptions)}
+          >
+            <UIIcon name="repeat-outline" size={20} color={theme.colors.primary} />
+            <WRText style={{ marginLeft: 8 }}>
+              {repeatOptions.find(option => option.value === repeatType)?.label || 'Não repetir'}
+            </WRText>
+            <View style={{ flex: 1 }} />
+            <UIIcon 
+              name={showRepeatOptions ? "chevron-up-outline" : "chevron-down-outline"} 
+              size={20} 
+              color={theme.colors.text} 
+            />
+          </TouchableOpacity>
+          
+          {showRepeatOptions && (
+            <View style={styles.repeatOptionsContainer}>
+              {repeatOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[styles.repeatOption, repeatType === option.value && styles.selectedRepeatOption]}
+                  onPress={() => {
+                    setRepeatType(option.value as RepeatType);
+                    if (option.value !== 'custom') {
+                      setShowRepeatOptions(false);
+                    }
+                  }}
+                >
+                  <WRText 
+                    style={repeatType === option.value ? { color: theme.colors.primary, fontWeight: 'bold' } : undefined}
+                  >
+                    {option.label}
+                  </WRText>
+                  {repeatType === option.value && (
+                    <UIIcon name="checkmark" size={18} color={theme.colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+              
+              {repeatType === 'custom' && (
+                <View style={styles.customDaysContainer}>
+                  <WRText style={{ marginBottom: 10 }} bold>
+                    Selecione os dias da semana:
+                  </WRText>
+                  <View style={styles.weekDaysContainer}>
+                    {weekDays.map((day) => (
+                      <TouchableOpacity
+                        key={day.value}
+                        style={[
+                          styles.dayButton,
+                          selectedDays.includes(day.value) && styles.selectedDayButton
+                        ]}
+                        onPress={() => {
+                          if (selectedDays.includes(day.value)) {
+                            setSelectedDays(selectedDays.filter(d => d !== day.value));
+                          } else {
+                            setSelectedDays([...selectedDays, day.value]);
+                          }
+                        }}
+                      >
+                        <WRText 
+                          style={[
+                            styles.dayText,
+                            selectedDays.includes(day.value) && styles.selectedDayText
+                          ]}
+                        >
+                          {day.label}
+                        </WRText>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+        
+        {formError && (
+          <View style={styles.errorContainer}>
+            <WRText style={styles.errorText}>{formError}</WRText>
+          </View>
+        )}
+        
         <UIButton
           text="Agendar sessão"
           icon="calendar-outline"
@@ -295,129 +392,3 @@ export default function ScheduleSessionScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const { width } = Dimensions.get('window');
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    marginBottom: 12,
-  },
-  emojiSection: {
-    alignItems: 'center',
-  },
-  selectedEmojiContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  emojiGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  emojiButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: 6,
-  },
-  selectedEmojiButton: {
-    borderWidth: 2,
-    borderColor: '#007AFF',
-  },
-  emoji: {
-    fontSize: 24,
-  },
-  chooseEmojiButton: {
-    marginTop: 8,
-  },
-  inputContainer: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  textInput: {
-    fontSize: 16,
-    height: 40,
-  },
-  dateTimeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  dateTimeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    flex: 1,
-    marginRight: 8,
-  },
-  timeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    width: 100,
-  },
-  createButton: {
-    marginTop: 16,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 20,
-    paddingHorizontal: 16,
-    paddingBottom: 32,
-    height: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  closeButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-  },
-  emojiSelector: {
-    flex: 1,
-  },
-});

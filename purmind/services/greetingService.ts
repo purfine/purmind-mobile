@@ -1,5 +1,14 @@
+/*
+ * @(#)greetingService.ts
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * http://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
 /**
- * Service to handle greeting messages based on time of day
+ * Serviço para gerenciar mensagens de saudação com base na hora do dia
  */
 
 import { getCurrentTimePeriod } from "@/util/time-util";
@@ -11,9 +20,9 @@ interface GreetingMessage {
 }
 
 /**
- * Get a random greeting message based on the time of day
- * @param userName The user's name
- * @returns A greeting message object with greeting, suggestion, and emoji
+ * Obtém uma mensagem de saudação aleatória com base na hora do dia
+ * @param userName O nome do usuário
+ * @returns Um objeto de mensagem de saudação com saudação, sugestão e emoji
  */
 export function getGreetingMessage(userName: string): GreetingMessage {
   const timePeriod = getCurrentTimePeriod();
@@ -27,7 +36,7 @@ export function getGreetingMessage(userName: string): GreetingMessage {
   };
 }
 
-// Collection of greeting messages for different times of day
+// Coleção de mensagens de saudação para diferentes períodos do dia
 const greetingMessages: Record<string, Array<{ greeting: string; suggestion: string; emoji: string }>> = {
   morning: [
     {

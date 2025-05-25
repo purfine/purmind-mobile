@@ -1,6 +1,15 @@
+/*
+ * @(#)time-util.tsx
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * http://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
 /**
- * Get the current time period (morning, afternoon, evening, night)
- * @returns The current time period
+ * Obtém o período atual do dia (manhã, tarde, noite, madrugada)
+ * @returns O período atual do dia
  */
 export function getCurrentTimePeriod(): 'morning' | 'afternoon' | 'evening' | 'night' {
   const currentHour = new Date().getHours();

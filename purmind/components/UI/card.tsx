@@ -1,3 +1,12 @@
+/*
+ * @(#)card.tsx
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * http://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
 import { View, StyleSheet, ViewStyle, Text, TouchableOpacity } from "react-native";
 import { useAppTheme } from "@/context/ThemeContext";
 import { Props } from "@/types/JSXTypes";
@@ -7,13 +16,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
 /**
- * 
+ * Componente de card para a interface do usuário
  */
 interface CardProps extends Props {
     fullWidth?: boolean;
 
     /**
-     * Accordion Configurations 
+     * Configurações do Accordion 
      */
     activeAccordion?: boolean;
     accordionTitle?: string;
@@ -21,22 +30,22 @@ interface CardProps extends Props {
     useDividerInAccordion?: boolean;
     
     /**
-     * Stack Navigation Configurations
+     * Configurações de Navegação em Stack
      */
     openStack?: boolean;
     href?: string;
     onPress?: () => void;
 
     /**
-     * Progress Bar Configurations
+     * Configurações da Barra de Progresso
      */
     showProgressBar?: boolean;
     progressValue?: number; // Value between 0 and 100
 }
 
 /**
- * 
- * @param cardProps 
+ * Componente de card customizável com suporte para accordion, navegação e barra de progresso
+ * @param cardProps Propriedades do componente
  * @returns React.JSX.Element
  * @author Victor Barberino
  */
@@ -48,19 +57,19 @@ export default function UICard({
     }: CardProps) {
     const { theme } = useAppTheme();
 
-    /** States */
+    /** Estados */
     const [withFullWidth, setWithFullWidth] = useState(false);
     const [withActiveAccordion, setWithActiveAccordion] = useState(false);
     const [accordionOpen, setAccordionOpen] = useState(false);
     const [useDividerAccordion, setUseDividerInAccordion] = useState(false);
     const [withOpenStack, setWithOpenStack] = useState(false);
     
-    // Animation values
+    // Valores de animação
     const contentHeight = useSharedValue(0);
     const rotateValue = useSharedValue(0);
 
     /**
-     * Initialize component state from props
+     * Inicializa o estado do componente a partir das props
      */
     useEffect(() => {
         setWithFullWidth(fullWidth);
@@ -69,7 +78,6 @@ export default function UICard({
         setUseDividerInAccordion(useDividerInAccordion);
         setWithOpenStack(openStack);
         
-        // Set initial animation values based on accordion state
         if (activeAccordion) {
             contentHeight.value = accordionBeOpenDefault ? 1 : 0;
             rotateValue.value = accordionBeOpenDefault ? 1 : 0;
@@ -77,7 +85,7 @@ export default function UICard({
     }, [fullWidth, activeAccordion, accordionBeOpenDefault, useDividerInAccordion, openStack]);
     
     /**
-     * Toggle accordion open/close state
+     * Alterna o estado de aberto/fechado do accordion
      */
     const toggleAccordion = useCallback(() => {
         setAccordionOpen(prev => {
@@ -90,7 +98,7 @@ export default function UICard({
     }, [contentHeight, rotateValue]);
     
     /**
-     * Navigate to the specified stack route
+     * Navega para a rota especificada no stack
      */
     const navigateToStack = useCallback(() => {
         // Se tiver uma função onPress personalizada, use-a em vez da navegação padrão

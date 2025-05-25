@@ -1,3 +1,12 @@
+/*
+ * @(#)ThemeContext.tsx
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * http://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
 import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
 import { Appearance, ColorSchemeName } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
@@ -53,7 +62,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 export function useAppTheme(){
   const context = useContext(ThemeContext); 
   if (context === undefined) {
-    throw new Error('useAppTheme must be used within a ThemeProvider');
+    throw new Error('useAppTheme deve ser usado dentro de um ThemeProvider');
   }
   return context;
 }

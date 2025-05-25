@@ -1,3 +1,12 @@
+/*
+ * @(#)AuthContext.tsx
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * http://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 
@@ -31,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function signIn(email: string, password: string) {
-    // Here you would implement real authentication logic
+    // Aqui você implementaria a lógica de autenticação real
     await SecureStore.setItemAsync('user', email);
     setUser(email);
   }
@@ -42,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signUp(email: string, password: string) {
-    // Registration logic
+    // Lógica de registro
     await SecureStore.setItemAsync('user', email);
     setUser(email);
   }
@@ -65,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
   return context;
 }
