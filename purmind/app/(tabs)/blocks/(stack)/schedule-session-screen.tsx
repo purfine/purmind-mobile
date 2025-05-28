@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, Platform, KeyboardAvoidingView, ScrollView, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, TouchableOpacity, Platform, KeyboardAvoidingView, ScrollView, Modal, Alert } from 'react-native';
 import WRScreenContainer from '@/components/wrappers/ScreenContainer';
 import WRText from '@/components/wrappers/Text';
 import UIButton from '@/components/UI/button';
@@ -9,9 +9,19 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { router } from 'expo-router';
 import { TextInput } from 'react-native-gesture-handler';
 import CustomEmojiSelector from '@/components/UI/emoji-selector';
-import { styles } from './styles/schedule-session-screen-stylesheet';
+import { styles as baseStyles } from './styles/schedule-session-screen-stylesheet';
 import { useSession } from '@/hooks/useSession';
 import { RepeatType } from '@/models/session';
+import { useDeviceApps } from '@/hooks/useDeviceApps'; 
+import { BlockedApp } from '@/models/session';
+
+// Estender os estilos para incluir os novos estilos necessários
+const styles = {
+  ...baseStyles,
+  disabledButton: {
+    opacity: 0.6,
+  },
+};
 
 // Emojis pré-definidos para seleção rápida
 const EMOJI_OPTIONS = [
@@ -21,6 +31,7 @@ const EMOJI_OPTIONS = [
 export default function ScheduleSessionScreen() {
   const { theme } = useAppTheme();
   const { createSession, formatDate, formatTime, dateToSeconds } = useSession();
+  const { installedApps, loading: loadingApps } = useDeviceApps();
   
   // State para inputs do formulário
   const [sessionTitle, setSessionTitle] = useState('');
@@ -47,6 +58,14 @@ export default function ScheduleSessionScreen() {
   const [showRepeatOptions, setShowRepeatOptions] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   
+  // State para controlar se as datas podem ser editadas baseado no tipo de repetição
+  const [datePickersDisabled, setDatePickersDisabled] = useState(false);
+  const [showRepeatDaysSection, setShowRepeatDaysSection] = useState(false);
+  
+  // State para apps bloqueados
+  const [selectedApps, setSelectedApps] = useState<BlockedApp[]>([]);
+  const [showAppSelector, setShowAppSelector] = useState(false);
+  
   // Opções de repetição
   const repeatOptions = [
     { label: 'Não repetir', value: 'none' },
@@ -66,6 +85,61 @@ export default function ScheduleSessionScreen() {
     { label: 'S', value: 5, fullName: 'Sexta' },
     { label: 'S', value: 6, fullName: 'Sábado' },
   ];
+  
+  // Efeito para ajustar os componentes baseado no tipo de repetição selecionado
+  useEffect(() => {
+    // Resetar estados quando o tipo de repetição muda
+    setFormError(null);
+    
+    switch (repeatType) {
+      case 'none':
+        // Para 'Não repetir', permitir edição completa de datas
+        setDatePickersDisabled(false);
+        setShowRepeatDaysSection(false);
+        break;
+        
+      case 'daily':
+        // Para 'Todos os dias', desabilitar seleção de data, manter apenas hora
+        setDatePickersDisabled(true);
+        setShowRepeatDaysSection(false);
+        
+        // Ajustar datas para o mesmo dia (hoje) mas manter horários
+        const today = new Date();
+        const newStartDate = new Date(startDate);
+        newStartDate.setFullYear(today.getFullYear());
+        newStartDate.setMonth(today.getMonth());
+        newStartDate.setDate(today.getDate());
+        setStartDate(newStartDate);
+        
+        const newEndDate = new Date(endDate);
+        newEndDate.setFullYear(today.getFullYear());
+        newEndDate.setMonth(today.getMonth());
+        newEndDate.setDate(today.getDate());
+        setEndDate(newEndDate);
+        break;
+        
+      case 'weekdays':
+        // Para 'Dias úteis', desabilitar seleção de data, pré-selecionar dias úteis
+        setDatePickersDisabled(true);
+        setShowRepeatDaysSection(true);
+        setSelectedDays([1, 2, 3, 4, 5]); // Segunda a sexta
+        break;
+        
+      case 'weekends':
+        // Para 'Fins de semana', desabilitar seleção de data, pré-selecionar fins de semana
+        setDatePickersDisabled(true);
+        setShowRepeatDaysSection(true);
+        setSelectedDays([0, 6]); // Domingo e sábado
+        break;
+        
+      case 'custom':
+        // Para 'Personalizado', habilitar seleção de dias específicos
+        setDatePickersDisabled(true);
+        setShowRepeatDaysSection(true);
+        // Não resetar selectedDays para permitir customização
+        break;
+    }
+  }, [repeatType]);
   
   // Manipula a seleção de emoji
   const handleEmojiSelected = (emoji: string) => {
@@ -107,14 +181,71 @@ export default function ScheduleSessionScreen() {
     }
   };
   
+  // Função para alternar a seleção de um app
+  const toggleAppSelection = (app: BlockedApp) => {
+    setSelectedApps(prevApps => {
+      const isSelected = prevApps.some(a => a.packageName === app.packageName);
+      if (isSelected) {
+        return prevApps.filter(a => a.packageName !== app.packageName);
+      } else {
+        return [...prevApps, app];
+      }
+    });
+  };
+  
   // Valida o formulário e cria a sessão
   const handleCreateSession = async () => {
     // Limpar erro anterior
     setFormError(null);
     
+    // Validar título
+    if (!sessionTitle.trim()) {
+      setFormError('O título da sessão é obrigatório');
+      return;
+    }
+    
+    // Validar dias selecionados para repetição personalizada
+    if (repeatType === 'custom' && selectedDays.length === 0) {
+      setFormError('Selecione pelo menos um dia da semana para repetição personalizada');
+      return;
+    }
+    
+    // Validar se há apps selecionados
+    if (selectedApps.length === 0) {
+      setFormError('Selecione pelo menos um aplicativo para bloquear');
+      return;
+    }
+    
     // Converter datas para timestamps em segundos
     const startTimestamp = dateToSeconds(startDate);
     const endTimestamp = dateToSeconds(endDate);
+    
+    // Validar horários
+    if (startTimestamp >= endTimestamp) {
+      setFormError('A hora de término deve ser posterior à hora de início');
+      return;
+    }
+    
+    // Preparar dados de repetição baseado no tipo selecionado
+    let repeatDays;
+    
+    switch (repeatType) {
+      case 'none':
+        repeatDays = undefined;
+        break;
+      case 'daily':
+        repeatDays = [0, 1, 2, 3, 4, 5, 6]; // Todos os dias
+        break;
+      case 'weekdays':
+        repeatDays = [1, 2, 3, 4, 5]; // Segunda a sexta
+        break;
+      case 'weekends':
+        repeatDays = [0, 6]; // Domingo e sábado
+        break;
+      case 'custom':
+        repeatDays = selectedDays;
+        break;
+    }
     
     // Criar a sessão usando o serviço
     const result = await createSession({
@@ -123,7 +254,8 @@ export default function ScheduleSessionScreen() {
       startSessionInSec: startTimestamp,
       endSessionInSec: endTimestamp,
       repeatType: repeatType,
-      repeatDays: repeatType === 'custom' ? selectedDays : undefined
+      repeatDays: repeatDays,
+      blockedApps: selectedApps
     });
     
     if (result.success) {
@@ -219,11 +351,23 @@ export default function ScheduleSessionScreen() {
           <WRText bold size={16} style={styles.sectionTitle}>Horário de início</WRText>
           <View style={styles.dateTimeContainer}>
             <TouchableOpacity 
-              style={styles.dateTimeButton}
-              onPress={() => setShowStartDatePicker(true)}
+              style={[styles.dateTimeButton, datePickersDisabled && styles.disabledButton]}
+              onPress={() => !datePickersDisabled && setShowStartDatePicker(true)}
+              disabled={datePickersDisabled}
             >
-              <UIIcon name="calendar-outline" size={20} color={theme.colors.primary} />
-              <WRText style={{ marginLeft: 8 }}>{formatDate(startDate)}</WRText>
+              <UIIcon 
+                name="calendar-outline" 
+                size={20} 
+                color={datePickersDisabled ? theme.colors.muted : theme.colors.primary} 
+              />
+              <WRText 
+                style={{ 
+                  marginLeft: 8, 
+                  color: datePickersDisabled ? theme.colors.muted : theme.colors.text 
+                }}
+              >
+                {datePickersDisabled ? "Definido pelo padrão de repetição" : formatDate(startDate)}
+              </WRText>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -258,11 +402,23 @@ export default function ScheduleSessionScreen() {
           <WRText bold size={16} style={styles.sectionTitle}>Horário de término</WRText>
           <View style={styles.dateTimeContainer}>
             <TouchableOpacity 
-              style={styles.dateTimeButton}
-              onPress={() => setShowEndDatePicker(true)}
+              style={[styles.dateTimeButton, datePickersDisabled && { opacity: 0.6 }]}
+              onPress={() => !datePickersDisabled && setShowEndDatePicker(true)}
+              disabled={datePickersDisabled}
             >
-              <UIIcon name="calendar-outline" size={20} color={theme.colors.primary} />
-              <WRText style={{ marginLeft: 8 }}>{formatDate(endDate)}</WRText>
+              <UIIcon 
+                name="calendar-outline" 
+                size={20} 
+                color={datePickersDisabled ? theme.colors.muted : theme.colors.primary} 
+              />
+              <WRText 
+                style={{ 
+                  marginLeft: 8, 
+                  color: datePickersDisabled ? theme.colors.muted : theme.colors.text 
+                }}
+              >
+                {datePickersDisabled ? "Definido pelo padrão de repetição" : formatDate(endDate)}
+              </WRText>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -336,44 +492,132 @@ export default function ScheduleSessionScreen() {
                   )}
                 </TouchableOpacity>
               ))}
-              
-              {repeatType === 'custom' && (
-                <View style={styles.customDaysContainer}>
-                  <WRText style={{ marginBottom: 10 }} bold>
-                    Selecione os dias da semana:
-                  </WRText>
-                  <View style={styles.weekDaysContainer}>
-                    {weekDays.map((day) => (
-                      <TouchableOpacity
-                        key={day.value}
-                        style={[
-                          styles.dayButton,
-                          selectedDays.includes(day.value) && styles.selectedDayButton
-                        ]}
-                        onPress={() => {
-                          if (selectedDays.includes(day.value)) {
-                            setSelectedDays(selectedDays.filter(d => d !== day.value));
-                          } else {
-                            setSelectedDays([...selectedDays, day.value]);
-                          }
-                        }}
-                      >
-                        <WRText 
-                          style={[
-                            styles.dayText,
-                            selectedDays.includes(day.value) && styles.selectedDayText
-                          ]}
-                        >
-                          {day.label}
-                        </WRText>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              )}
+            </View>
+          )}
+          
+          {/* Mostrar seleção de dias quando apropriado */}
+          {showRepeatDaysSection && (
+            <View style={styles.customDaysContainer}>
+              <WRText style={{ marginBottom: 10 }} bold>
+                {repeatType === 'custom' ? 'Selecione os dias da semana:' : 'Dias selecionados:'}
+              </WRText>
+              <View style={styles.weekDaysContainer}>
+                {weekDays.map((day) => (
+                  <TouchableOpacity
+                    key={day.value}
+                    style={[
+                      styles.dayButton,
+                      selectedDays.includes(day.value) && styles.selectedDayButton
+                    ]}
+                    onPress={() => {
+                      if (repeatType === 'custom') {
+                        if (selectedDays.includes(day.value)) {
+                          setSelectedDays(selectedDays.filter(d => d !== day.value));
+                        } else {
+                          setSelectedDays([...selectedDays, day.value]);
+                        }
+                      } else {
+                        // Para tipos pré-definidos, mostrar alerta explicando
+                        Alert.alert(
+                          'Dias pré-definidos',
+                          `Para personalizar os dias, selecione a opção "Personalizado" no tipo de repetição.`,
+                          [{ text: 'OK' }]
+                        );
+                      }
+                    }}
+                    disabled={repeatType !== 'custom'}
+                  >
+                    <WRText 
+                      style={[
+                        styles.dayText,
+                        selectedDays.includes(day.value) && styles.selectedDayText,
+                        repeatType !== 'custom' && selectedDays.includes(day.value) && { opacity: 0.7 }
+                      ]}
+                    >
+                      {day.label}
+                    </WRText>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           )}
         </View>
+        
+        {/* Seção de Seleção de Aplicativos */}
+        <View style={styles.section}>
+          <WRText bold size={16} style={styles.sectionTitle}>Aplicativos a Bloquear</WRText>
+          
+          <View style={styles.selectedAppsContainer}>
+            {selectedApps.map(app => (
+              <View key={app.packageName} style={styles.selectedAppChip}>
+                <WRText>{app.icon}</WRText>
+                <WRText style={styles.selectedAppName}>{app.appName}</WRText>
+                <TouchableOpacity
+                  onPress={() => toggleAppSelection(app)}
+                  style={styles.removeAppButton}
+                >
+                  <UIIcon name="close-circle" size={20} color={theme.colors.error} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+
+          <UIButton
+            text="Selecionar Aplicativos"
+            icon="apps-outline"
+            size="small"
+            style={styles.selectAppsButton}
+            onPress={() => setShowAppSelector(true)}
+          />
+        </View>
+
+        {/* Modal de Seleção de Aplicativos */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={showAppSelector}
+          onRequestClose={() => setShowAppSelector(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
+              <View style={styles.modalHeader}>
+                <WRText bold size={20}>Selecionar Aplicativos</WRText>
+                <TouchableOpacity 
+                  onPress={() => setShowAppSelector(false)}
+                  style={styles.closeButton}
+                >
+                  <UIIcon name="close-outline" size={24} color={theme.colors.text} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.appList}>
+                {installedApps.map(app => (
+                  <TouchableOpacity
+                    key={app.packageName}
+                    style={[
+                      styles.appItem,
+                      selectedApps.some(a => a.packageName === app.packageName) && styles.selectedAppItem
+                    ]}
+                    onPress={() => toggleAppSelection(app)}
+                  >
+                    <WRText style={styles.appIcon}>❤️</WRText>
+                    <WRText style={styles.appName}>{app.appName}</WRText>
+                    {selectedApps.some(a => a.packageName === app.packageName) && (
+                      <UIIcon name="checkmark-circle" size={24} color={theme.colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <UIButton
+                text="Confirmar Seleção"
+                size="large"
+                style={styles.confirmButton}
+                onPress={() => setShowAppSelector(false)}
+              />
+            </View>
+          </View>
+        </Modal>
         
         {formError && (
           <View style={styles.errorContainer}>

@@ -10,13 +10,11 @@ export default function App() {
     'Urbanist-Medium':    require('./assets/fonts/urbanist/Urbanist-Medium.ttf'),
     'Urbanist-SemiBold':  require('./assets/fonts/urbanist/Urbanist-SemiBold.ttf'),
     'Urbanist-Bold':      require('./assets/fonts/urbanist/Urbanist-Bold.ttf'),
-  });
+  }); 
 
   if (!loaded) {
     return (
-      <>
-        <Text>Houve um erro ao carregar as fontes.</Text>
-      </>
+      <Text>Houve um erro ao carregar as fontes.</Text>
     );
   } 
   return (

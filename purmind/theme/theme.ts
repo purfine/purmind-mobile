@@ -30,6 +30,7 @@ export interface AppTheme {
     border: string;
     notification: string;
     dividerColor: string;
+    error: string;
   },
   fonts: {
     regular: FontStyle;
@@ -56,7 +57,8 @@ export const lightTheme: AppTheme = {
     muted: "#868686",
     border: '#c7c7c7',
     notification: '#ff80ab',
-    dividerColor: "#BFBFBF"
+    dividerColor: "#BFBFBF",
+    error: "#FF0000"
   },
   fonts: {
     regular: { fontFamily: 'Urbanist-Regular', fontWeight: '400' },
@@ -108,7 +110,8 @@ export const darkTheme: AppTheme = {
     muted: "#A6A6A6", // mais claro para legibilidade
     border: '#2C2C2E',
     notification: '#FF99B3', // mais suave e visível
-    dividerColor: "#3A3A3C"
+    dividerColor: "#3A3A3C",
+    error: "#FF0000"
   },
   fonts: {
     regular: { fontFamily: 'Urbanist-Regular', fontWeight: '400' },

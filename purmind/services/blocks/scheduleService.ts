@@ -47,13 +47,40 @@ export class ScheduleService {
       return { success: false, error: 'A hora de término deve ser posterior à hora de início' };
     }
 
-    // Para o tipo de repetição personalizada, valida que os dias foram selecionados
-    if (sessionData.repeatType === 'custom' && (!sessionData.repeatDays || sessionData.repeatDays.length === 0)) {
-      return { success: false, error: 'Selecione pelo menos um dia da semana para repetição personalizada' };
+    // Validação e processamento dos dados de repetição
+    let processedData = { ...sessionData };
+    
+    switch (sessionData.repeatType) {
+      case 'none':
+        // Para 'Não repetir', não precisa de dias
+        processedData.repeatDays = undefined;
+        break;
+        
+      case 'daily':
+        // Para 'Todos os dias', define todos os dias da semana
+        processedData.repeatDays = [0, 1, 2, 3, 4, 5, 6];
+        break;
+        
+      case 'weekdays':
+        // Para 'Dias úteis', define dias de segunda a sexta
+        processedData.repeatDays = [1, 2, 3, 4, 5];
+        break;
+        
+      case 'weekends':
+        // Para 'Fins de semana', define sábado e domingo
+        processedData.repeatDays = [0, 6];
+        break;
+        
+      case 'custom':
+        // Para 'Personalizado', valida que os dias foram selecionados
+        if (!sessionData.repeatDays || sessionData.repeatDays.length === 0) {
+          return { success: false, error: 'Selecione pelo menos um dia da semana para repetição personalizada' };
+        }
+        break;
     }
 
     try {
-      const session = this.sessionRepository.createSession(sessionData);
+      const session = this.sessionRepository.createSession(processedData);
       return { success: true, session };
     } catch (error) {
       return { success: false, error: 'Erro ao criar sessão' };

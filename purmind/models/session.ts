@@ -11,6 +11,12 @@ import "react-native-get-random-values";
 
 export type RepeatType = 'none' | 'daily' | 'weekdays' | 'weekends' | 'custom';
 
+export interface BlockedApp {
+  packageName: string;  // Nome do pacote do aplicativo
+  appName: string;     // Nome amigável do aplicativo
+  icon?: string;       // Ícone do aplicativo (opcional)
+}
+
 export interface Session {
   id: string;
   figure: string;
@@ -21,6 +27,7 @@ export interface Session {
   createdAt: number;
   repeatType: RepeatType;
   repeatDays?: number[]; // 0 = domingo, 1 = segunda, ..., 6 = sábado (para tipo 'custom')
+  blockedApps: BlockedApp[];  // Lista de aplicativos bloqueados
 }
 
 export interface CreateSessionDTO {
@@ -30,4 +37,5 @@ export interface CreateSessionDTO {
   endSessionInSec: number;
   repeatType: RepeatType;
   repeatDays?: number[];
+  blockedApps: BlockedApp[];  // Lista de aplicativos bloqueados
 }

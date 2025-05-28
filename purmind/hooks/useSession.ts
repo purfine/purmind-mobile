@@ -44,7 +44,15 @@ export const useSession = () => {
   const createSession = useCallback(async (sessionData: CreateSessionDTO) => {
     try {
       setLoading(true);
-      const result = scheduleService.createSession(sessionData);
+      
+      // Garantir que os dados de repetição estão consistentes
+      const processedData = {
+        ...sessionData,
+        // Garantir que repeatDays está definido corretamente para cada tipo de repetição
+        repeatDays: sessionData.repeatType === 'none' ? undefined : sessionData.repeatDays
+      };
+      
+      const result = scheduleService.createSession(processedData);
       
       if (result.success && result.session) {
         // Reload sessions to get the updated list

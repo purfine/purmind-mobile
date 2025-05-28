@@ -1,8 +1,23 @@
 import { Dimensions, StyleSheet } from "react-native";
 import { useAppTheme } from "@/context/ThemeContext";
 
-const { theme } = useAppTheme();
+// Obtém o tema de forma segura para uso em um arquivo de estilos
+const getTheme = () => {
+  try {
+    return useAppTheme().theme;
+  } catch (e) {
+    // Fallback para quando o hook não pode ser usado fora de um componente React
+    return {
+      colors: {
+        primary: '#007AFF',
+        text: '#000000',
+        error: '#d32f2f'
+      }
+    };
+  }
+};
 
+const theme = getTheme();
 const { width } = Dimensions.get('window');
 export const styles = StyleSheet.create({
   repeatButton: {
@@ -200,5 +215,61 @@ export const styles = StyleSheet.create({
   errorText: {
     color: '#d32f2f',
     fontSize: 14,
-  }
+  },
+  selectedAppsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginVertical: 10,
+    gap: 8,
+  },
+  selectedAppChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  selectedAppName: {
+    marginHorizontal: 8,
+    fontSize: 14,
+  },
+  removeAppButton: {
+    padding: 2,
+  },
+  selectAppsButton: {
+    marginTop: 10,
+  },
+  appList: {
+    flex: 1,
+    marginTop: 10,
+  },
+  appItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  selectedAppItem: {
+    backgroundColor: '#f5f5f5',
+  },
+  appIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  appName: {
+    flex: 1,
+    fontSize: 16,
+  },
+  confirmButton: {
+    marginTop: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
 });
+
+// Exportando como default para evitar o erro do Expo Router
+export default styles;

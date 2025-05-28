@@ -1,0 +1,8 @@
+{
+  "name": "InstalledApps",
+  "platforms": ["android", "web"],
+  "android": {
+    "modules": ["expo.modules.installedapps.InstalledAppsModule"],
+    "packageImportPath": "expo.modules.installedapps"
+  }
+}
