@@ -43,3 +43,17 @@ utils/emojiMap.ts
 # Assets
 assets/emojis/img/*
 
+# Android/IntelliJ
+android/build/
+android/app/build/
+android/.gradle/
+android/.idea/
+android/local.properties
+android/*.iml
+android/.cxx/
+.idea/
+
+# Android Profiling
+android/captures/
+android/app/release/
+
