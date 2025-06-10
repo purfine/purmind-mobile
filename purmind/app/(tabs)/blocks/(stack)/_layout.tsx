@@ -1,23 +1,41 @@
+/*
+ * @(#)_layout.tsx
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * https://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
 import { Stack, useRouter } from 'expo-router';
 import { useAppTheme } from '@/context/ThemeContext';
-import { StatusBar } from 'expo-status-bar';
+import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { TouchableOpacity, Text, Platform } from 'react-native';
+import { TouchableOpacity, Text, Platform, StyleSheet, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    ...Platform.select({
+      android: {
+        paddingTop: StatusBar.currentHeight || 0,
+      },
+    }),
+  },
+});
 
 export default function StackLayout() {
   const { theme } = useAppTheme();
   const router = useRouter();
   
-  // Define o estilo da status bar para combinar com o tema
   const statusBarStyle = theme.colors.background === '#121212' ? 'light' : 'dark';
   
-  // Função para voltar à tela anterior
   const goBack = () => {
     router.back();
   };
   
-  // Componente personalizado para o botão de voltar
   const CustomBackButton = () => (
     <TouchableOpacity 
       onPress={goBack} 
@@ -34,78 +52,67 @@ export default function StackLayout() {
   );
   
   return (
-    <SafeAreaProvider>
-      <StatusBar style={statusBarStyle} />
+    <SafeAreaProvider style={styles.container}>
+      <ExpoStatusBar style={statusBarStyle} />
       <Stack
-      screenOptions={{
-        headerShown: true,
-        headerStyle: {
-          backgroundColor: theme.colors.card,
-        },
-        headerTintColor: theme.colors.text,
-        contentStyle: {
-          backgroundColor: theme.colors.background,
-        },
-        headerTitleAlign: 'center',
-        headerShadowVisible: false,
-        // Configurações específicas para o botão de voltar
-        headerBackTitle: '', // Remove o texto do botão de voltar no iOS
-        headerBackVisible: true, // Garante que o botão de voltar esteja visível
-        headerLeft: Platform.OS === 'ios' ? () => <CustomBackButton /> : undefined
-      }}
-    >
-      <Stack.Screen 
-        name="block-about" 
-        options={{
-          title: 'Bloqueios + Purmind',
-          headerTitleStyle: {
-            fontSize: 18,
-            fontWeight: '600',
-          },
-          // Configurações para o header
+        screenOptions={{
+          headerShown: true,
           headerStyle: {
             backgroundColor: theme.colors.card,
           },
-          // Configurações para o conteúdo
+          headerTintColor: theme.colors.text,
           contentStyle: {
             backgroundColor: theme.colors.background,
           },
-          // Usa SafeAreaView para lidar com a status bar
-          headerTransparent: false,
-          // Configurações específicas para o botão de voltar no iOS
-          headerBackVisible: Platform.OS !== 'ios', // Esconde o botão padrão no iOS
+          headerTitleAlign: 'center',
+          headerShadowVisible: false,
           headerBackTitle: '',
-          // Botão de voltar personalizado para iOS
-          headerLeft: Platform.OS === 'ios' ? () => <CustomBackButton /> : undefined
+          headerBackVisible: true,
+          headerLeft: Platform.OS === 'ios' ? () => <CustomBackButton /> : undefined,
         }}
-      />
+      >
+        <Stack.Screen 
+          name="block-about" 
+          options={{
+            title: 'Bloqueios + Purmind',
+            headerTitleStyle: {
+              fontSize: 18,
+              fontWeight: '600',
+            },
+            headerStyle: {
+              backgroundColor: theme.colors.card,
+            },
+            contentStyle: {
+              backgroundColor: theme.colors.background,
+            },
+            headerTransparent: false,
+            headerBackVisible: Platform.OS !== 'ios',
+            headerBackTitle: '',
+            headerLeft: Platform.OS === 'ios' ? () => <CustomBackButton /> : undefined
+          }}
+        />
 
-      <Stack.Screen 
-        name="schedule-session-screen" 
-        options={{
-          title: 'Nova sessão',
-          headerTitleStyle: {
-            fontSize: 18,
-            fontWeight: '600',
-          },
-          // Configurações para o header
-          headerStyle: {
-            backgroundColor: theme.colors.card,
-          },
-          // Configurações para o conteúdo
-          contentStyle: {
-            backgroundColor: theme.colors.background,
-          },
-          // Usa SafeAreaView para lidar com a status bar
-          headerTransparent: false,
-          // Configurações específicas para o botão de voltar no iOS
-          headerBackVisible: Platform.OS !== 'ios', // Esconde o botão padrão no iOS
-          headerBackTitle: '',
-          // Botão de voltar personalizado para iOS
-          headerLeft: Platform.OS === 'ios' ? () => <CustomBackButton /> : undefined
-        }}
-      />
-    </Stack>
+        <Stack.Screen 
+          name="schedule-session-screen" 
+          options={{
+            title: 'Nova sessão',
+            headerTitleStyle: {
+              fontSize: 18,
+              fontWeight: '600',
+            },
+            headerStyle: {
+              backgroundColor: theme.colors.card,
+            },
+            contentStyle: {
+              backgroundColor: theme.colors.background,
+            },
+            headerTransparent: false,
+            headerBackVisible: Platform.OS !== 'ios',
+            headerBackTitle: '',
+            headerLeft: Platform.OS === 'ios' ? () => <CustomBackButton /> : undefined
+          }}
+        />
+      </Stack>
     </SafeAreaProvider>
   );
 }

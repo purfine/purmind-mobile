@@ -1,5 +1,15 @@
+/*
+ * @(#)schedule-session-screen.tsx
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * https://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, Platform, KeyboardAvoidingView, ScrollView, Modal, Alert } from 'react-native';
+import { View, TouchableOpacity, Platform, KeyboardAvoidingView, ScrollView, Modal, Alert, Image, StatusBar } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import WRScreenContainer from '@/components/wrappers/ScreenContainer';
 import WRText from '@/components/wrappers/Text';
 import UIButton from '@/components/UI/button';
@@ -14,6 +24,7 @@ import { useSession } from '@/hooks/useSession';
 import { RepeatType } from '@/models/session';
 import { useDeviceApps } from '@/hooks/useDeviceApps'; 
 import { BlockedApp } from '@/models/session';
+import { useToast } from '@/context/ToastContext';
 
 // Estender os estilos para incluir os novos estilos necessários
 const styles = {
@@ -29,9 +40,11 @@ const EMOJI_OPTIONS = [
 ];
 
 export default function ScheduleSessionScreen() {
+  const insets = useSafeAreaInsets();
   const { theme } = useAppTheme();
   const { createSession, formatDate, formatTime, dateToSeconds } = useSession();
   const { installedApps, loading: loadingApps } = useDeviceApps();
+  const { showToast } = useToast();
   
   // State para inputs do formulário
   const [sessionTitle, setSessionTitle] = useState('');
@@ -195,24 +208,21 @@ export default function ScheduleSessionScreen() {
   
   // Valida o formulário e cria a sessão
   const handleCreateSession = async () => {
-    // Limpar erro anterior
-    setFormError(null);
-    
     // Validar título
     if (!sessionTitle.trim()) {
-      setFormError('O título da sessão é obrigatório');
+      showToast('O título da sessão é obrigatório', 'error');
       return;
     }
     
     // Validar dias selecionados para repetição personalizada
     if (repeatType === 'custom' && selectedDays.length === 0) {
-      setFormError('Selecione pelo menos um dia da semana para repetição personalizada');
+      showToast('Selecione pelo menos um dia da semana para repetição personalizada', 'error');
       return;
     }
     
     // Validar se há apps selecionados
     if (selectedApps.length === 0) {
-      setFormError('Selecione pelo menos um aplicativo para bloquear');
+      showToast('Selecione pelo menos um aplicativo para bloquear', 'error');
       return;
     }
     
@@ -222,7 +232,7 @@ export default function ScheduleSessionScreen() {
     
     // Validar horários
     if (startTimestamp >= endTimestamp) {
-      setFormError('A hora de término deve ser posterior à hora de início');
+      showToast('A hora de término deve ser posterior à hora de início', 'error');
       return;
     }
     
@@ -259,380 +269,403 @@ export default function ScheduleSessionScreen() {
     });
     
     if (result.success) {
+      showToast('Sessão criada com sucesso!', 'success');
       // Navegar de volta para a tela anterior
       router.back();
     } else {
-      // Exibir mensagem de erro
-      setFormError(result.error || 'Ocorreu um erro ao criar a sessão');
+      showToast(result.error || 'Ocorreu um erro ao criar a sessão', 'error');
     }
   };
   
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <WRScreenContainer style={styles.container}>    
-        <View style={styles.section}>
-          <WRText bold size={16} style={styles.sectionTitle}>Emoji da sessão</WRText>
-          <View style={styles.emojiSection}>
-            <View style={styles.selectedEmojiContainer}>
-              <WRText size={32}>{selectedEmoji}</WRText>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
+      >
+        <WRScreenContainer style={styles.container}>
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.section}>
+              <WRText bold size={16} style={styles.sectionTitle}>Emoji da sessão</WRText>
+              <View style={styles.emojiSection}>
+                <View style={styles.selectedEmojiContainer}>
+                  <WRText size={32}>{selectedEmoji}</WRText>
+                </View>
+                
+                <View style={styles.emojiGrid}>
+                  {EMOJI_OPTIONS.map((emoji) => (
+                    <TouchableOpacity
+                      key={emoji}
+                      style={[
+                        styles.emojiButton,
+                        selectedEmoji === emoji && styles.selectedEmojiButton
+                      ]}
+                      onPress={() => setSelectedEmoji(emoji)}
+                    >
+                      <WRText style={styles.emoji}>{emoji}</WRText>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                
+                <UIButton
+                  text="Escolher outro emoji"
+                  icon="happy-outline"
+                  size="small"
+                  style={styles.chooseEmojiButton}
+                  onPress={() => setIsEmojiSelectorVisible(true)}
+                />
+              </View>
             </View>
             
-            <View style={styles.emojiGrid}>
-              {EMOJI_OPTIONS.map((emoji) => (
-                <TouchableOpacity
-                  key={emoji}
-                  style={[
-                    styles.emojiButton,
-                    selectedEmoji === emoji && styles.selectedEmojiButton
-                  ]}
-                  onPress={() => setSelectedEmoji(emoji)}
-                >
-                  <WRText style={styles.emoji}>{emoji}</WRText>
-                </TouchableOpacity>
-              ))}
+            {/* Modal do seletor de emojis */}
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={isEmojiSelectorVisible}
+              onRequestClose={() => setIsEmojiSelectorVisible(false)}
+            >
+              <View style={styles.modalContainer}>
+                <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
+                  <View style={styles.modalHeader}>
+                    <WRText bold size={20}>Selecionar Emoji</WRText>
+                    <TouchableOpacity 
+                      onPress={() => setIsEmojiSelectorVisible(false)}
+                      style={styles.closeButton}
+                    >
+                      <UIIcon name="close-outline" size={24} color={theme.colors.text} />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <CustomEmojiSelector
+                    onEmojiSelected={handleEmojiSelected}
+                    showSearchBar={true}
+                    showTabs={true}
+                    theme={theme.type === 'dark' ? 'dark' : 'light'}
+                  />
+                </View>
+              </View>
+            </Modal>
+            
+            <View style={styles.section}>
+              <WRText bold size={16} style={styles.sectionTitle}>Título da sessão</WRText>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  value={sessionTitle}
+                  onChangeText={setSessionTitle}
+                  placeholder="Ex: Tempo de estudo"
+                  placeholderTextColor={theme.colors.muted}
+                />
+              </View>
             </View>
             
-            <UIButton
-              text="Escolher outro emoji"
-              icon="happy-outline"
-              size="small"
-              style={styles.chooseEmojiButton}
-              onPress={() => setIsEmojiSelectorVisible(true)}
-            />
-          </View>
-        </View>
-        
-        {/* Modal do seletor de emojis */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={isEmojiSelectorVisible}
-          onRequestClose={() => setIsEmojiSelectorVisible(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
-              <View style={styles.modalHeader}>
-                <WRText bold size={20}>Selecionar Emoji</WRText>
+            <View style={styles.section}>
+              <WRText bold size={16} style={styles.sectionTitle}>Horário de início</WRText>
+              <View style={styles.dateTimeContainer}>
                 <TouchableOpacity 
-                  onPress={() => setIsEmojiSelectorVisible(false)}
-                  style={styles.closeButton}
+                  style={[styles.dateTimeButton, datePickersDisabled && styles.disabledButton]}
+                  onPress={() => !datePickersDisabled && setShowStartDatePicker(true)}
+                  disabled={datePickersDisabled}
                 >
-                  <UIIcon name="close-outline" size={24} color={theme.colors.text} />
+                  <UIIcon 
+                    name="calendar-outline" 
+                    size={20} 
+                    color={datePickersDisabled ? theme.colors.muted : theme.colors.primary} 
+                  />
+                  <WRText 
+                    style={{ 
+                      marginLeft: 8, 
+                      color: datePickersDisabled ? theme.colors.muted : theme.colors.text 
+                    }}
+                  >
+                    {datePickersDisabled ? "Definido pelo padrão de repetição" : formatDate(startDate)}
+                  </WRText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.timeButton}
+                  onPress={() => setShowStartTimePicker(true)}
+                >
+                  <UIIcon name="time-outline" size={20} color={theme.colors.primary} />
+                  <WRText style={{ marginLeft: 8 }}>{formatTime(startDate)}</WRText>
                 </TouchableOpacity>
               </View>
               
-              <CustomEmojiSelector
-                onEmojiSelected={handleEmojiSelected}
-                showSearchBar={true}
-                showTabs={true}
-                theme={theme.type === 'dark' ? 'dark' : 'light'}
-              />
+              {showStartDatePicker && (
+                <DateTimePicker
+                  value={startDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onStartDateChange}
+                />
+              )}
+              
+              {showStartTimePicker && (
+                <DateTimePicker
+                  value={startDate}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onStartTimeChange}
+                />
+              )}
             </View>
-          </View>
-        </Modal>
-        
-        <View style={styles.section}>
-          <WRText bold size={16} style={styles.sectionTitle}>Título da sessão</WRText>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.textInput}
-              value={sessionTitle}
-              onChangeText={setSessionTitle}
-              placeholder="Ex: Tempo de estudo"
-              placeholderTextColor={theme.colors.muted}
-            />
-          </View>
-        </View>
-        
-        <View style={styles.section}>
-          <WRText bold size={16} style={styles.sectionTitle}>Horário de início</WRText>
-          <View style={styles.dateTimeContainer}>
-            <TouchableOpacity 
-              style={[styles.dateTimeButton, datePickersDisabled && styles.disabledButton]}
-              onPress={() => !datePickersDisabled && setShowStartDatePicker(true)}
-              disabled={datePickersDisabled}
-            >
-              <UIIcon 
-                name="calendar-outline" 
-                size={20} 
-                color={datePickersDisabled ? theme.colors.muted : theme.colors.primary} 
-              />
-              <WRText 
-                style={{ 
-                  marginLeft: 8, 
-                  color: datePickersDisabled ? theme.colors.muted : theme.colors.text 
-                }}
-              >
-                {datePickersDisabled ? "Definido pelo padrão de repetição" : formatDate(startDate)}
-              </WRText>
-            </TouchableOpacity>
             
-            <TouchableOpacity 
-              style={styles.timeButton}
-              onPress={() => setShowStartTimePicker(true)}
-            >
-              <UIIcon name="time-outline" size={20} color={theme.colors.primary} />
-              <WRText style={{ marginLeft: 8 }}>{formatTime(startDate)}</WRText>
-            </TouchableOpacity>
-          </View>
-          
-          {showStartDatePicker && (
-            <DateTimePicker
-              value={startDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onStartDateChange}
-            />
-          )}
-          
-          {showStartTimePicker && (
-            <DateTimePicker
-              value={startDate}
-              mode="time"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onStartTimeChange}
-            />
-          )}
-        </View>
-        
-        <View style={styles.section}>
-          <WRText bold size={16} style={styles.sectionTitle}>Horário de término</WRText>
-          <View style={styles.dateTimeContainer}>
-            <TouchableOpacity 
-              style={[styles.dateTimeButton, datePickersDisabled && { opacity: 0.6 }]}
-              onPress={() => !datePickersDisabled && setShowEndDatePicker(true)}
-              disabled={datePickersDisabled}
-            >
-              <UIIcon 
-                name="calendar-outline" 
-                size={20} 
-                color={datePickersDisabled ? theme.colors.muted : theme.colors.primary} 
-              />
-              <WRText 
-                style={{ 
-                  marginLeft: 8, 
-                  color: datePickersDisabled ? theme.colors.muted : theme.colors.text 
-                }}
-              >
-                {datePickersDisabled ? "Definido pelo padrão de repetição" : formatDate(endDate)}
-              </WRText>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.timeButton}
-              onPress={() => setShowEndTimePicker(true)}
-            >
-              <UIIcon name="time-outline" size={20} color={theme.colors.primary} />
-              <WRText style={{ marginLeft: 8 }}>{formatTime(endDate)}</WRText>
-            </TouchableOpacity>
-          </View>
-          
-          {showEndDatePicker && (
-            <DateTimePicker
-              value={endDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onEndDateChange}
-            />
-          )}
-          
-          {showEndTimePicker && (
-            <DateTimePicker
-              value={endDate}
-              mode="time"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onEndTimeChange}
-            />
-          )}
-        </View>
-        
-        {/* Seção de Repetição */}
-        <View style={styles.section}>
-          <WRText bold size={16} style={styles.sectionTitle}>Repetição</WRText>
-          
-          <TouchableOpacity 
-            style={styles.repeatButton}
-            onPress={() => setShowRepeatOptions(!showRepeatOptions)}
-          >
-            <UIIcon name="repeat-outline" size={20} color={theme.colors.primary} />
-            <WRText style={{ marginLeft: 8 }}>
-              {repeatOptions.find(option => option.value === repeatType)?.label || 'Não repetir'}
-            </WRText>
-            <View style={{ flex: 1 }} />
-            <UIIcon 
-              name={showRepeatOptions ? "chevron-up-outline" : "chevron-down-outline"} 
-              size={20} 
-              color={theme.colors.text} 
-            />
-          </TouchableOpacity>
-          
-          {showRepeatOptions && (
-            <View style={styles.repeatOptionsContainer}>
-              {repeatOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.value}
-                  style={[styles.repeatOption, repeatType === option.value && styles.selectedRepeatOption]}
-                  onPress={() => {
-                    setRepeatType(option.value as RepeatType);
-                    if (option.value !== 'custom') {
-                      setShowRepeatOptions(false);
-                    }
-                  }}
-                >
-                  <WRText 
-                    style={repeatType === option.value ? { color: theme.colors.primary, fontWeight: 'bold' } : undefined}
-                  >
-                    {option.label}
-                  </WRText>
-                  {repeatType === option.value && (
-                    <UIIcon name="checkmark" size={18} color={theme.colors.primary} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-          
-          {/* Mostrar seleção de dias quando apropriado */}
-          {showRepeatDaysSection && (
-            <View style={styles.customDaysContainer}>
-              <WRText style={{ marginBottom: 10 }} bold>
-                {repeatType === 'custom' ? 'Selecione os dias da semana:' : 'Dias selecionados:'}
-              </WRText>
-              <View style={styles.weekDaysContainer}>
-                {weekDays.map((day) => (
-                  <TouchableOpacity
-                    key={day.value}
-                    style={[
-                      styles.dayButton,
-                      selectedDays.includes(day.value) && styles.selectedDayButton
-                    ]}
-                    onPress={() => {
-                      if (repeatType === 'custom') {
-                        if (selectedDays.includes(day.value)) {
-                          setSelectedDays(selectedDays.filter(d => d !== day.value));
-                        } else {
-                          setSelectedDays([...selectedDays, day.value]);
-                        }
-                      } else {
-                        // Para tipos pré-definidos, mostrar alerta explicando
-                        Alert.alert(
-                          'Dias pré-definidos',
-                          `Para personalizar os dias, selecione a opção "Personalizado" no tipo de repetição.`,
-                          [{ text: 'OK' }]
-                        );
-                      }
-                    }}
-                    disabled={repeatType !== 'custom'}
-                  >
-                    <WRText 
-                      style={[
-                        styles.dayText,
-                        selectedDays.includes(day.value) && styles.selectedDayText,
-                        repeatType !== 'custom' && selectedDays.includes(day.value) && { opacity: 0.7 }
-                      ]}
-                    >
-                      {day.label}
-                    </WRText>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-        </View>
-        
-        {/* Seção de Seleção de Aplicativos */}
-        <View style={styles.section}>
-          <WRText bold size={16} style={styles.sectionTitle}>Aplicativos a Bloquear</WRText>
-          
-          <View style={styles.selectedAppsContainer}>
-            {selectedApps.map(app => (
-              <View key={app.packageName} style={styles.selectedAppChip}>
-                <WRText>{app.icon}</WRText>
-                <WRText style={styles.selectedAppName}>{app.appName}</WRText>
-                <TouchableOpacity
-                  onPress={() => toggleAppSelection(app)}
-                  style={styles.removeAppButton}
-                >
-                  <UIIcon name="close-circle" size={20} color={theme.colors.error} />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
-
-          <UIButton
-            text="Selecionar Aplicativos"
-            icon="apps-outline"
-            size="small"
-            style={styles.selectAppsButton}
-            onPress={() => setShowAppSelector(true)}
-          />
-        </View>
-
-        {/* Modal de Seleção de Aplicativos */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={showAppSelector}
-          onRequestClose={() => setShowAppSelector(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
-              <View style={styles.modalHeader}>
-                <WRText bold size={20}>Selecionar Aplicativos</WRText>
+            <View style={styles.section}>
+              <WRText bold size={16} style={styles.sectionTitle}>Horário de término</WRText>
+              <View style={styles.dateTimeContainer}>
                 <TouchableOpacity 
-                  onPress={() => setShowAppSelector(false)}
-                  style={styles.closeButton}
+                  style={[styles.dateTimeButton, datePickersDisabled && { opacity: 0.6 }]}
+                  onPress={() => !datePickersDisabled && setShowEndDatePicker(true)}
+                  disabled={datePickersDisabled}
                 >
-                  <UIIcon name="close-outline" size={24} color={theme.colors.text} />
+                  <UIIcon 
+                    name="calendar-outline" 
+                    size={20} 
+                    color={datePickersDisabled ? theme.colors.muted : theme.colors.primary} 
+                  />
+                  <WRText 
+                    style={{ 
+                      marginLeft: 8, 
+                      color: datePickersDisabled ? theme.colors.muted : theme.colors.text 
+                    }}
+                  >
+                    {datePickersDisabled ? "Definido pelo padrão de repetição" : formatDate(endDate)}
+                  </WRText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.timeButton}
+                  onPress={() => setShowEndTimePicker(true)}
+                >
+                  <UIIcon name="time-outline" size={20} color={theme.colors.primary} />
+                  <WRText style={{ marginLeft: 8 }}>{formatTime(endDate)}</WRText>
                 </TouchableOpacity>
               </View>
-
-              <ScrollView style={styles.appList}>
-                {installedApps.map(app => (
-                  <TouchableOpacity
-                    key={app.packageName}
-                    style={[
-                      styles.appItem,
-                      selectedApps.some(a => a.packageName === app.packageName) && styles.selectedAppItem
-                    ]}
-                    onPress={() => toggleAppSelection(app)}
-                  >
-                    <WRText style={styles.appIcon}>❤️</WRText>
-                    <WRText style={styles.appName}>{app.appName}</WRText>
-                    {selectedApps.some(a => a.packageName === app.packageName) && (
-                      <UIIcon name="checkmark-circle" size={24} color={theme.colors.primary} />
+              
+              {showEndDatePicker && (
+                <DateTimePicker
+                  value={endDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onEndDateChange}
+                />
+              )}
+              
+              {showEndTimePicker && (
+                <DateTimePicker
+                  value={endDate}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onEndTimeChange}
+                />
+              )}
+            </View>
+            
+            {/* Seção de Repetição */}
+            <View style={styles.section}>
+              <WRText bold size={16} style={styles.sectionTitle}>Repetição</WRText>
+              
+              <TouchableOpacity 
+                style={styles.repeatButton}
+                onPress={() => setShowRepeatOptions(!showRepeatOptions)}
+              >
+                <UIIcon name="repeat-outline" size={20} color={theme.colors.primary} />
+                <WRText style={{ marginLeft: 8 }}>
+                  {repeatOptions.find(option => option.value === repeatType)?.label || 'Não repetir'}
+                </WRText>
+                <View style={{ flex: 1 }} />
+                <UIIcon 
+                  name={showRepeatOptions ? "chevron-up-outline" : "chevron-down-outline"} 
+                  size={20} 
+                  color={theme.colors.text} 
+                />
+              </TouchableOpacity>
+              
+              {showRepeatOptions && (
+                <View style={styles.repeatOptionsContainer}>
+                  {repeatOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[styles.repeatOption, repeatType === option.value && styles.selectedRepeatOption]}
+                      onPress={() => {
+                        setRepeatType(option.value as RepeatType);
+                        if (option.value !== 'custom') {
+                          setShowRepeatOptions(false);
+                        }
+                      }}
+                    >
+                      <WRText 
+                        style={repeatType === option.value ? { color: theme.colors.primary, fontWeight: 'bold' } : undefined}
+                      >
+                        {option.label}
+                      </WRText>
+                      {repeatType === option.value && (
+                        <UIIcon name="checkmark" size={18} color={theme.colors.primary} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              
+              {/* Mostrar seleção de dias quando apropriado */}
+              {showRepeatDaysSection && (
+                <View style={styles.customDaysContainer}>
+                  <WRText style={{ marginBottom: 10 }} bold>
+                    {repeatType === 'custom' ? 'Selecione os dias da semana:' : 'Dias selecionados:'}
+                  </WRText>
+                  <View style={styles.weekDaysContainer}>
+                    {weekDays.map((day) => (
+                      <TouchableOpacity
+                        key={day.value}
+                        style={[
+                          styles.dayButton,
+                          selectedDays.includes(day.value) && styles.selectedDayButton
+                        ]}
+                        onPress={() => {
+                          if (repeatType === 'custom') {
+                            if (selectedDays.includes(day.value)) {
+                              setSelectedDays(selectedDays.filter(d => d !== day.value));
+                            } else {
+                              setSelectedDays([...selectedDays, day.value]);
+                            }
+                          } else {
+                            // Para tipos pré-definidos, mostrar alerta explicando
+                            Alert.alert(
+                              'Dias pré-definidos',
+                              `Para personalizar os dias, selecione a opção "Personalizado" no tipo de repetição.`,
+                              [{ text: 'OK' }]
+                            );
+                          }
+                        }}
+                        disabled={repeatType !== 'custom'}
+                      >
+                        <WRText 
+                          style={[
+                            styles.dayText,
+                            selectedDays.includes(day.value) && styles.selectedDayText,
+                            repeatType !== 'custom' && selectedDays.includes(day.value) && { opacity: 0.7 }
+                          ]}
+                        >
+                          {day.label}
+                        </WRText>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
+            
+            {/* Seção de Seleção de Aplicativos */}
+            <View style={styles.section}>
+              <WRText bold size={16} style={styles.sectionTitle}>Aplicativos a Bloquear</WRText>
+              
+              <View style={styles.selectedAppsContainer}>
+                {selectedApps.map(app => (
+                  <View key={app.packageName} style={styles.selectedAppChip}>
+                    {app.icon ? (
+                      <Image
+                        source={{ uri: `data:image/png;base64,${app.icon}` }}
+                        style={styles.selectedAppChipIcon}
+                      />
+                    ) : (
+                      <View style={[styles.selectedAppChipIcon, { backgroundColor: theme.colors.muted }]} />
                     )}
-                  </TouchableOpacity>
+                    <WRText style={styles.selectedAppName}>{app.appName}</WRText>
+                    <TouchableOpacity
+                      onPress={() => toggleAppSelection(app)}
+                      style={styles.removeAppButton}
+                    >
+                      <UIIcon name="close-circle" size={20} color={theme.colors.error} />
+                    </TouchableOpacity>
+                  </View>
                 ))}
-              </ScrollView>
+              </View>
 
               <UIButton
-                text="Confirmar Seleção"
-                size="large"
-                style={styles.confirmButton}
-                onPress={() => setShowAppSelector(false)}
+                text="Selecionar Aplicativos"
+                icon="apps-outline"
+                size="small"
+                style={styles.selectAppsButton}
+                onPress={() => setShowAppSelector(true)}
               />
             </View>
+
+            {/* Modal de Seleção de Aplicativos */}
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={showAppSelector}
+              onRequestClose={() => setShowAppSelector(false)}
+            >
+              <View style={styles.modalContainer}>
+                <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
+                  <View style={styles.modalHeader}>
+                    <WRText bold size={20}>Selecionar Aplicativos</WRText>
+                    <TouchableOpacity 
+                      onPress={() => setShowAppSelector(false)}
+                      style={styles.closeButton}
+                    >
+                      <UIIcon name="close-outline" size={24} color={theme.colors.text} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <ScrollView style={styles.appList}>
+                    {installedApps.map(app => (
+                      <TouchableOpacity
+                        key={app.packageName}
+                        style={[
+                          styles.appItem,
+                          selectedApps.some(a => a.packageName === app.packageName) && styles.selectedAppItem
+                        ]}
+                        onPress={() => toggleAppSelection(app)}
+                      >
+                        {app.icon ? (
+                          <Image
+                            source={{ uri: `data:image/png;base64,${app.icon}` }}
+                            style={styles.appIcon}
+                          />
+                        ) : (
+                          <View style={[styles.appIcon, { backgroundColor: theme.colors.muted }]} />
+                        )}
+                        <WRText style={styles.appName}>{app.appName}</WRText>
+                        {selectedApps.some(a => a.packageName === app.packageName) && (
+                          <UIIcon name="checkmark-circle" size={24} color={theme.colors.primary} />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+
+                  <UIButton
+                    text="Confirmar Seleção"
+                    size="large"
+                    style={styles.confirmButton}
+                    onPress={() => setShowAppSelector(false)}
+                  />
+                </View>
+              </View>
+            </Modal>
+          </ScrollView>
+          
+          <View style={[
+            styles.bottomButtonContainer, 
+            { backgroundColor: theme.colors.background }
+          ]}>
+            <UIButton
+              text="Agendar sessão"
+              icon="calendar-outline"
+              size="large"
+              style={styles.createButton}
+              onPress={handleCreateSession}
+            />
           </View>
-        </Modal>
-        
-        {formError && (
-          <View style={styles.errorContainer}>
-            <WRText style={styles.errorText}>{formError}</WRText>
-          </View>
-        )}
-        
-        <UIButton
-          text="Agendar sessão"
-          icon="calendar-outline"
-          size="large"
-          style={styles.createButton}
-          onPress={handleCreateSession}
-        />
-      </WRScreenContainer>
-    </KeyboardAvoidingView>
+        </WRScreenContainer>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

@@ -1,3 +1,12 @@
+/*
+ * @(#)App.tsx
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * https://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
 import { ThemeProvider } from './context/ThemeContext';
 import RootLayout from './app/_layout';
 import { useFonts } from 'expo-font';

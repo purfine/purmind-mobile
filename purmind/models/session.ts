@@ -7,8 +7,6 @@
  * Todos os direitos reservados.
  */
 
-import "react-native-get-random-values";
-
 export type RepeatType = 'none' | 'daily' | 'weekdays' | 'weekends' | 'custom';
 
 export interface BlockedApp {

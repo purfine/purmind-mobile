@@ -1,3 +1,12 @@
+/*
+ * @(#)_layout.tsx
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * https://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Slot, usePathname } from 'expo-router';
 import { AuthProvider, useAuth } from '../context/AuthContext';
@@ -6,6 +15,7 @@ import { ThemeProvider } from '../context/ThemeContext';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
+import { ToastProvider } from '@/context/ToastContext';
 
 // Contexto para gerenciar a visibilidade do header em telas stack
 interface NavigationContextType {
@@ -34,13 +44,15 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <ThemeProvider>
-        <SafeAreaProvider>
-          <NavigationContext.Provider value={{ hideTabBar, setHideTabBar }}>
-            <AuthProvider>
-              <InnerRouter />
-            </AuthProvider>
-          </NavigationContext.Provider>
-        </SafeAreaProvider>
+        <ToastProvider>
+          <SafeAreaProvider>
+            <NavigationContext.Provider value={{ hideTabBar, setHideTabBar }}>
+              <AuthProvider>
+                <InnerRouter />
+              </AuthProvider>
+            </NavigationContext.Provider>
+          </SafeAreaProvider>
+        </ToastProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

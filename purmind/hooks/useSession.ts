@@ -52,20 +52,22 @@ export const useSession = () => {
         repeatDays: sessionData.repeatType === 'none' ? undefined : sessionData.repeatDays
       };
       
-      const result = scheduleService.createSession(processedData);
+      const result = await scheduleService.createSession(processedData);
       
       if (result.success && result.session) {
         // Reload sessions to get the updated list
-        loadSessions();
+        await loadSessions();
         return { success: true };
       } else {
-        setError(result.error || 'Erro ao criar sessão');
-        return { success: false, error: result.error };
+        const errorMessage = result.error || 'Erro ao criar sessão';
+        setError(errorMessage);
+        console.error('Erro específico:', errorMessage);
+        return { success: false, error: errorMessage };
       }
     } catch (err) {
-      const errorMessage = 'Erro ao criar sessão';
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao criar sessão';
       setError(errorMessage);
-      console.error(errorMessage, err);
+      console.error('Erro detalhado:', err);
       return { success: false, error: errorMessage };
     } finally {
       setLoading(false);

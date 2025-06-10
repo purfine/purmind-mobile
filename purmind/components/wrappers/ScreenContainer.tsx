@@ -1,5 +1,14 @@
-import React, { forwardRef } from "react";
-import { StyleSheet, ScrollView, ScrollViewProps, Dimensions } from "react-native";
+/*
+ * @(#)ScreenContainer.tsx
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * https://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
+import React, { forwardRef, useEffect, useState } from "react";
+import { StyleSheet, ScrollView, ScrollViewProps, Dimensions, Keyboard, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface WRScreenContainerProps extends ScrollViewProps {
@@ -8,18 +17,40 @@ interface WRScreenContainerProps extends ScrollViewProps {
 
 const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRScreenContainerProps>((
   {useSafeAreaView = false, style, contentContainerStyle, children, ...props}, ref) => {
-    // Get screen height to ensure minimum content height
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
     const { height: screenHeight } = Dimensions.get('window');
+    
+    useEffect(() => {
+      const keyboardWillShowListener = Keyboard.addListener(
+        Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+        (e) => {
+          setKeyboardHeight(e.endCoordinates.height);
+        }
+      );
+      
+      const keyboardWillHideListener = Keyboard.addListener(
+        Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+        () => {
+          setKeyboardHeight(0);
+        }
+      );
+
+      return () => {
+        keyboardWillShowListener.remove();
+        keyboardWillHideListener.remove();
+      };
+    }, []);
     
     const componentStyle = StyleSheet.create({
         screenContainer: {
             flex: 1,
-            height: screenHeight,
+            height: screenHeight - keyboardHeight,
             paddingHorizontal: 10
         },
         contentContainer: {
+            flexGrow: 1,
             paddingBottom: 20,
-            minHeight: screenHeight - 100 // Ensure there's enough content to scroll
+            minHeight: screenHeight - keyboardHeight - 100
         }
     });
     
@@ -37,6 +68,7 @@ const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRSc
           bounces={true}
           alwaysBounceVertical={true}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {children}
         </ScrollView>

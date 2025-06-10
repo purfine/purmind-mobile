@@ -1,3 +1,12 @@
+/*
+ * @(#)schedule-session-screen-stylesheet.ts
+ *
+ * Copyright 2025, Purmind - Purfine Group
+ * http://www.purmind.com.br
+ *
+ * Todos os direitos reservados.
+ */
+
 import { Dimensions, StyleSheet } from "react-native";
 import { useAppTheme } from "@/context/ThemeContext";
 
@@ -78,7 +87,6 @@ export const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 16,
   },
   header: {
     flexDirection: 'row',
@@ -225,12 +233,18 @@ export const styles = StyleSheet.create({
   selectedAppChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
     marginRight: 8,
     marginBottom: 8,
+  },
+  selectedAppChipIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    marginRight: 8,
   },
   selectedAppName: {
     marginHorizontal: 8,
@@ -257,8 +271,12 @@ export const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   appIcon: {
-    fontSize: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 8,
     marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   appName: {
     flex: 1,
@@ -268,6 +286,32 @@ export const styles = StyleSheet.create({
     marginTop: 16,
     marginHorizontal: 16,
     marginBottom: 16,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: 100,
+  },
+  bottomButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    paddingBottom: 24,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
 });
 
