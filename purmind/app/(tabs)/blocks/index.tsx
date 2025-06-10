@@ -1,28 +1,38 @@
+import React from 'react';
 import UICard from "@/components/UI/card";
 import UIIcon from "@/components/UI/icon";
 import WRScreenContainer from "@/components/wrappers/ScreenContainer";
 import WRText from "@/components/wrappers/Text";
 import { useAppTheme } from "@/context/ThemeContext";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, router } from "expo-router";
 import SessionCard from "@/components/component_screens/blocks/SessionCard";
-import { useCallback, useState } from "react";
-import { getAllSessions, getActiveSession, Session } from "@/mock/sessions";
+import { useCallback, useState, useEffect } from "react";
+import { Session } from "@/models/session";
+import { useSession } from "@/hooks/useSession";
+import UIButton from "@/components/UI/button";
 
 export default function BlocksScreen() {
   const { theme } = useAppTheme();
+  const { sessions, activeSession, nextSession, loadSessions } = useSession();
 
-  // Estado para armazenar a sessão ativa e todas as sessões
-  const [activeSession, setActiveSession] = useState<Session | undefined>();
-  const [allSessions, setAllSessions] = useState<Session[]>([]);
+  // Estado para armazenar as próximas sessões
+  const [upcomingSessions, setUpcomingSessions] = useState<Session[]>([]);
   
-  // Atualizar os dados quando a tela receber foco
+  // Atualizar as próximas sessões quando as sessions mudarem
+  useEffect(() => {
+    const now = Math.floor(Date.now() / 1000);
+    const upcoming = sessions
+      .filter(session => session.startSessionInSec > now)
+      .sort((a, b) => a.startSessionInSec - b.startSessionInSec);
+    setUpcomingSessions(upcoming);
+  }, [sessions]);
+  
+  // Carregar sessões quando a tela receber foco
   useFocusEffect(
     useCallback(() => {
-      // Buscar a sessão ativa e todas as sessões
-      setActiveSession(getActiveSession());
-      setAllSessions(getAllSessions());
-    }, [])
+      loadSessions();
+    }, [loadSessions])
   );
 
   const screenStyles = StyleSheet.create({
@@ -49,9 +59,25 @@ export default function BlocksScreen() {
     cardContainer: {
       marginTop: 20
     },
-    badgeIcon: {
-
-    } 
+    sectionTitle: {
+      marginTop: 20,
+      marginBottom: 10
+    },
+    viewAllButton: {
+      marginTop: 10,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 12,
+      borderRadius: 8,
+      backgroundColor: theme.colors.background,
+      borderWidth: 1,
+      borderColor: theme.colors.border
+    },
+    allSessionsButton: {
+      marginTop: 20,
+      marginBottom: 20
+    }
   });
 
   return (
@@ -89,8 +115,8 @@ export default function BlocksScreen() {
         </View>
       </UICard>
 
-      {/** Sessão em andamento */}
-      <WRText style={{ marginTop: 20 }} bold size={16}>Sessão em andamento</WRText>
+      {/** Sessão ativa */}
+      <WRText bold size={16} style={screenStyles.sectionTitle}>Sessão ativa</WRText>
       {activeSession ? (
         <SessionCard
           sessionFig={activeSession.figure}
@@ -99,34 +125,64 @@ export default function BlocksScreen() {
           openStack={true}
           endSessionInSec={activeSession.endSessionInSec}
           startSessionInSec={activeSession.startSessionInSec}
+          blockedApps={activeSession.blockedApps}
         />
+      ) : nextSession ? (
+        <>
+          <WRText style={{ marginTop: 10, marginBottom: 10 }} color={theme.colors.muted}>
+            Nenhuma sessão em andamento.
+          </WRText>
+          <WRText bold size={16} style={screenStyles.sectionTitle}>Próxima sessão</WRText>
+          <SessionCard
+            sessionFig={nextSession.figure}
+            sessionTitle={nextSession.title}
+            showProgressBar
+            openStack={true}
+            endSessionInSec={nextSession.endSessionInSec}
+            startSessionInSec={nextSession.startSessionInSec}
+            blockedApps={nextSession.blockedApps}
+          />
+        </>
       ) : (
         <WRText style={{ marginTop: 10, marginBottom: 10 }} color={theme.colors.muted}>
           Nenhuma sessão em andamento. Agende uma nova sessão abaixo.
         </WRText>
       )}
       
-      {/** Sessões agendadas */}
-      {allSessions.length > 0 && (
+      {/** Próximas sessões */}
+      {upcomingSessions.length > 0 && upcomingSessions[0]?.id !== nextSession?.id && (
         <>
-          <WRText style={{ marginTop: 20 }} bold size={16}>Sessões agendadas</WRText>
-          {allSessions.map((session) => (
-            <SessionCard
-              key={session.id}
-              sessionFig={session.figure}
-              sessionTitle={session.title}
-              showProgressBar
-              openStack={true}
-              endSessionInSec={session.endSessionInSec}
-              startSessionInSec={session.startSessionInSec}
-            />
-          ))}
+          <WRText bold size={16} style={screenStyles.sectionTitle}>Outras sessões</WRText>
+          {upcomingSessions
+            .filter(session => session.id !== nextSession?.id)
+            .slice(0, 2)
+            .map((session) => (
+              <SessionCard
+                key={session.id}
+                sessionFig={session.figure}
+                sessionTitle={session.title}
+                showProgressBar
+                openStack={true}
+                endSessionInSec={session.endSessionInSec}
+                startSessionInSec={session.startSessionInSec}
+                blockedApps={session.blockedApps}
+              />
+            ))}
         </>
       )}
-    
-     {/** Agendar sessão */} 
-      <WRText style={{ marginTop: 20 }} bold size={16}>Nova sessão</WRText>
-      <View style={{ marginTop: 20 }}>
+
+      {/** Botão Ver minhas sessões */}
+      <UIButton
+        text="Ver minhas sessões"
+        icon="calendar-outline"
+        size="medium"
+        textStyle={{ fontSize: 14, fontWeight: 'regular' }}
+        hasBackground={false}
+      />
+
+      {/** Agendar sessão */} 
+      <WRText bold size={16} style={screenStyles.sectionTitle}>Nova sessão</WRText>
+      <View style={{ marginTop: 10 }}>
         <UICard openStack={true} href="/blocks/schedule-session-screen">
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <UIIcon name="calendar-outline" size={24} color={theme.colors.primary} />

@@ -18,6 +18,7 @@ import { scheduleService } from '@/services/blocks/scheduleService';
 export const useSession = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSession, setActiveSession] = useState<Session | undefined>(undefined);
+  const [nextSession, setNextSession] = useState<Session | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,8 +29,28 @@ export const useSession = () => {
       const allSessions = scheduleService.getAllSessions();
       setSessions(allSessions);
       
-      const active = scheduleService.getActiveSession();
+      // Encontra a sessão ativa atual
+      const now = Math.floor(Date.now() / 1000);
+      const active = allSessions.find(session => {
+        const startTime = session.startSessionInSec % 86400;
+        const endTime = session.endSessionInSec % 86400;
+        const currentTime = now % 86400;
+        
+        // Verifica se a sessão está ativa agora
+        return currentTime >= startTime && currentTime < endTime;
+      });
+      
+      console.log('useSession - Sessão ativa:', active ? active.title : 'Nenhuma');
       setActiveSession(active);
+      
+      // Se não houver sessão ativa, procura a próxima
+      if (!active) {
+        const next = scheduleService.getActiveSession();
+        console.log('useSession - Próxima sessão:', next ? next.title : 'Nenhuma');
+        setNextSession(next);
+      } else {
+        setNextSession(undefined);
+      }
       
       setError(null);
     } catch (err) {
@@ -43,60 +64,47 @@ export const useSession = () => {
   // Cria uma nova sessão
   const createSession = useCallback(async (sessionData: CreateSessionDTO) => {
     try {
-      setLoading(true);
-      
-      // Garantir que os dados de repetição estão consistentes
-      const processedData = {
-        ...sessionData,
-        // Garantir que repeatDays está definido corretamente para cada tipo de repetição
-        repeatDays: sessionData.repeatType === 'none' ? undefined : sessionData.repeatDays
-      };
-      
-      const result = await scheduleService.createSession(processedData);
-      
-      if (result.success && result.session) {
-        // Reload sessions to get the updated list
-        await loadSessions();
-        return { success: true };
-      } else {
-        const errorMessage = result.error || 'Erro ao criar sessão';
-        setError(errorMessage);
-        console.error('Erro específico:', errorMessage);
-        return { success: false, error: errorMessage };
+      const result = await scheduleService.createSession(sessionData);
+      if (result.success) {
+        loadSessions(); // Recarrega as sessões após criar uma nova
+        return result;
       }
+      setError(result.error || 'Erro ao criar sessão');
+      return result;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao criar sessão';
-      setError(errorMessage);
-      console.error('Erro detalhado:', err);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
+      const error = 'Erro ao criar sessão';
+      setError(error);
+      console.error(error, err);
+      return { success: false, error };
     }
   }, [loadSessions]);
 
   // Exclui uma sessão
   const deleteSession = useCallback((id: string) => {
     try {
-      setLoading(true);
       const success = scheduleService.deleteSession(id);
-      
       if (success) {
-        // Reload sessions to get the updated list
-        loadSessions();
-        return { success: true };
-      } else {
-        const errorMessage = 'Sessão não encontrada';
-        setError(errorMessage);
-        return { success: false, error: errorMessage };
+        loadSessions(); // Recarrega as sessões após excluir
       }
+      return success;
     } catch (err) {
-      const errorMessage = 'Erro ao excluir sessão';
-      setError(errorMessage);
-      console.error(errorMessage, err);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
+      const error = 'Erro ao excluir sessão';
+      setError(error);
+      console.error(error, err);
+      return false;
     }
+  }, [loadSessions]);
+
+  // Atualiza o status das sessões periodicamente
+  useEffect(() => {
+    loadSessions();
+    
+    // Atualiza a cada 30 segundos
+    const interval = setInterval(() => {
+      loadSessions();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [loadSessions]);
 
   // Métodos auxiliares para formatação de data/hora
@@ -117,14 +125,10 @@ export const useSession = () => {
     return scheduleService.secondsToDate(seconds);
   }, []);
 
-  // Carrega sessões na montagem inicial
-  useEffect(() => {
-    loadSessions();
-  }, [loadSessions]);
-
   return {
     sessions,
     activeSession,
+    nextSession,
     loading,
     error,
     createSession,
