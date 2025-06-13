@@ -4,7 +4,7 @@ import UIIcon from "@/components/UI/icon";
 import WRScreenContainer from "@/components/wrappers/ScreenContainer";
 import WRText from "@/components/wrappers/Text";
 import { useAppTheme } from "@/context/ThemeContext";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useFocusEffect, router } from "expo-router";
 import SessionCard from "@/components/component_screens/blocks/SessionCard";
 import { useCallback, useState, useEffect } from "react";
@@ -15,23 +15,55 @@ import UIButton from "@/components/UI/button";
 export default function BlocksScreen() {
   const { theme } = useAppTheme();
   const { sessions, activeSession, nextSession, loadSessions } = useSession();
+  const [refreshing, setRefreshing] = useState(false);
 
   // Estado para armazenar as próximas sessões
   const [upcomingSessions, setUpcomingSessions] = useState<Session[]>([]);
   
+  // Função para atualizar os dados
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadSessions();
+    setRefreshing(false);
+  }, [loadSessions]);
+
   // Atualizar as próximas sessões quando as sessions mudarem
   useEffect(() => {
     const now = Math.floor(Date.now() / 1000);
     const upcoming = sessions
-      .filter(session => session.startSessionInSec > now)
+      .filter(session => {
+        // Para sessões sem repetição, verifica se é futura
+        if (session.repeatType === 'none') {
+          return session.startSessionInSec > now;
+        }
+
+        // Para sessões com repetição
+        const sessionEndTime = session.endSessionInSec % 86400;
+        const currentTime = now % 86400;
+
+        // Se já passou do horário hoje, verifica se tem próxima ocorrência
+        if (currentTime >= sessionEndTime) {
+          return true;
+        }
+
+        // Se ainda não chegou no horário hoje
+        return currentTime < sessionEndTime;
+      })
       .sort((a, b) => a.startSessionInSec - b.startSessionInSec);
     setUpcomingSessions(upcoming);
   }, [sessions]);
   
-  // Carregar sessões quando a tela receber foco
+  // Carregar sessões quando a tela receber foco e atualizar a cada segundo
   useFocusEffect(
     useCallback(() => {
       loadSessions();
+      
+      // Atualiza a cada 1 segundo
+      const interval = setInterval(() => {
+        loadSessions();
+      }, 1000);
+
+      return () => clearInterval(interval);
     }, [loadSessions])
   );
 
@@ -81,7 +113,10 @@ export default function BlocksScreen() {
   });
 
   return (
-    <WRScreenContainer>
+    <WRScreenContainer
+      onRefresh={onRefresh}
+      refreshing={refreshing}
+    >
       {/* Card with information about blocks */}
       <UICard 
         fullWidth 

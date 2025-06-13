@@ -40,13 +40,11 @@ export const useSession = () => {
         return currentTime >= startTime && currentTime < endTime;
       });
       
-      console.log('useSession - Sessão ativa:', active ? active.title : 'Nenhuma');
       setActiveSession(active);
       
       // Se não houver sessão ativa, procura a próxima
       if (!active) {
         const next = scheduleService.getActiveSession();
-        console.log('useSession - Próxima sessão:', next ? next.title : 'Nenhuma');
         setNextSession(next);
       } else {
         setNextSession(undefined);

@@ -8,17 +8,29 @@
  */
 
 import React, { forwardRef, useEffect, useState } from "react";
-import { StyleSheet, ScrollView, ScrollViewProps, Dimensions, Keyboard, Platform } from "react-native";
+import { StyleSheet, ScrollView, ScrollViewProps, Dimensions, Keyboard, Platform, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAppTheme } from "@/context/ThemeContext";
 
 interface WRScreenContainerProps extends ScrollViewProps {
   useSafeAreaView?: boolean;
+  onRefresh?: () => Promise<void>;
+  refreshing?: boolean;
 }
 
 const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRScreenContainerProps>((
-  {useSafeAreaView = false, style, contentContainerStyle, children, ...props}, ref) => {
+  {
+    useSafeAreaView = false, 
+    style, 
+    contentContainerStyle, 
+    children, 
+    onRefresh,
+    refreshing = false,
+    ...props
+  }, ref) => {
     const [keyboardHeight, setKeyboardHeight] = useState(0);
     const { height: screenHeight } = Dimensions.get('window');
+    const { theme } = useAppTheme();
     
     useEffect(() => {
       const keyboardWillShowListener = Keyboard.addListener(
@@ -69,6 +81,16 @@ const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRSc
           alwaysBounceVertical={true}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[theme.colors.primary]}
+                tintColor={theme.colors.primary}
+              />
+            ) : undefined
+          }
         >
           {children}
         </ScrollView>
